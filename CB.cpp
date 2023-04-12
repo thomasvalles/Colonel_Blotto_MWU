@@ -49,9 +49,7 @@ int CB::run() {
 		
 			}
 			regrets.push_back(regret / (double(i) + 1)); //take the average
-			if (isnan(regrets.back())) {
-				std::cout << "isnan. regret:  " << regret << " time: " << std::to_string(double(i) + 1);
-			}
+			
 		}
 		++i;
 	} while ((i < TMAX) && (regrets.back() > tol));

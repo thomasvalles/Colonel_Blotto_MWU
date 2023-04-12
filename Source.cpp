@@ -79,14 +79,6 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 	f << "Average regret: " << std::to_string(avg_reg) << '\n';
 
-	if (isnan(avg_reg)) {
-		f << "Regrets: ";
-		for (double reg : test.get_regrets()) {
-			f << reg << '\n';
-		}
-		f << '\n';
-	}
-
 	f << "Runtime: " << std::to_string(elapsed.count()) << " seconds" << '\n' << '\n';
 
 	f << "Last 3 rounds: " << '\n';
@@ -106,7 +98,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 int main() {
 
 
-	/*
+	
 	//MAIN TESTS:
 	bool optimistic = true;
 	bool random_weights = true;
@@ -124,12 +116,12 @@ int main() {
 	threads.emplace_back(std::make_unique<std::thread>(run_test, 100, std::vector<int> {100, 100}, !optimistic, random_weights));
 	threads.emplace_back(std::make_unique<std::thread>(run_test, 100, std::vector<int> {200, 200}, !optimistic, random_weights));
 	threads.emplace_back(std::make_unique<std::thread>(run_test, 100, std::vector<int> {300, 300}, !optimistic, random_weights));
-	
+	*/
 	for (auto& t : threads) { // join all the threads
 		t->join();
 	}
 
-	*/
+	
 
 
 	/*
@@ -193,7 +185,7 @@ int main() {
 
 	
 	// FOR PLOTTING REGRETS
-	
+	/*
 	size_t t = 5000;
 	size_t l = 2;
 	size_t k = 10;
