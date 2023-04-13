@@ -1,8 +1,6 @@
 #include "CB.h"
 #include "Part.h"
 
-
-
 CB::CB(size_t _T, size_t _L, size_t _k, Eigen::VectorXi _N, Eigen::VectorXd _W, double _beta, size_t _T0, double _tol, bool _optimistic) :
 	TMAX(_T), L(_L), k(_k), N(_N), W(_W), beta(_beta), T0(_T0), tol(_tol), optimistic(_optimistic) {
 
@@ -39,7 +37,6 @@ int CB::run() {
 			for (size_t l = 0; l < L; ++l) {
 
 				long double best_hist_loss = get_best_hist_loss(i, l); //get the best hist loss
-				//regret += hist_loss(l)(Eigen::seq(0, k-1), strategies(l)(i, Eigen::seq(0, k-1))).sum();
 				
 				for (size_t h = 0; h < k; ++h) {
 					regret += hist_loss(l)(h, strategies(l)(i, h)); //get the loss for the chosen strategy 
@@ -94,7 +91,7 @@ Eigen::VectorXi CB::rwm(size_t t, size_t l) {
 			
 			Vecld weights = Vecld::Zero(total + 1); //will hold probability of allocating y soldiers to battle h for y = 0, ..., N[l]
 			auto beta_vec = Eigen::ArrayXd::Constant(remaining + 1, beta);
-			auto y = Eigen::ArrayXi::LinSpaced(remaining, 0, remaining);
+			auto y = Eigen::ArrayXi::LinSpaced(remaining + 1, 0, remaining);
 			weights(Eigen::seq(0, remaining)) = pow(beta, hist_loss(l).row(h)(Eigen::seq(0, remaining))) * f(h - 1, Eigen::seq(remaining, 0, Eigen::fix<-1>)) / f(h, remaining);
 
 			if (std::abs(weights.sum() - 1) > 1e-5) {
@@ -125,27 +122,8 @@ Arrld CB::get_partition(size_t t, size_t l) {
 
 	//otherwise
 	for (size_t h = 1; h < k; ++h) {
-		
-		/*
-		Eigen::Tensor<long double, 1> beta_vec(total+1);
-		Eigen::Tensor<long double, 1> f_vec(total+1);
-		for (size_t y = 0; y <= total; ++y) {
-			beta_vec(y) = std::pow(beta, hist_loss(l)(h, y));
-			f_vec(y) = f(h - 1, y);
-		}
-		auto x = beta_vec.convolve(f_vec, 0);
-		//std::cout <<beta_vec.convolve(f_vec, 0);
-		*/
-		
 		for (size_t y = 0; y <= total; ++y) {
 			f(h, y) = (pow(beta, hist_loss(l).row(h)(Eigen::seq(0, y))) * f(h - 1, Eigen::seq(y, 0, Eigen::fix<-1>))).sum();
-			/*
-			long double s = 0;
-			for (size_t x = 0; x <= y; ++x) {
-				s += std::pow(beta, hist_loss(l)(h, x)) * f(h - 1, y - x);
-			}
-			f(h, y) = s;
-			*/
 		}
 	}
 	return f;
@@ -153,12 +131,13 @@ Arrld CB::get_partition(size_t t, size_t l) {
 
 
 Arrld CB::get_loss(size_t t, size_t l) {
-	auto m_greater = strategies(1-l).row(t).replicate(N(l), 1).transpose() > Eigen::ArrayXi::LinSpaced(N(l), 0, N(l)).rowwise().replicate(k).transpose();
+
+	auto m_greater = strategies(1-l).row(t).replicate(N(l) + 1, 1).transpose() > Eigen::ArrayXi::LinSpaced(N(l) + 1, 0, N(l)).rowwise().replicate(k).transpose();
 	auto casted_m_greater = m_greater.cast<double>();
-	auto m_equal = strategies(1 - l).row(t).replicate(N(l), 1).transpose() == Eigen::ArrayXi::LinSpaced(N(l), 0, N(l)).rowwise().replicate(k).transpose();
+	auto m_equal = strategies(1 - l).row(t).replicate(N(l) + 1, 1).transpose() == Eigen::ArrayXi::LinSpaced(N(l) + 1, 0, N(l)).rowwise().replicate(k).transpose();
 	auto casted_m_equal = m_equal.cast<double>();
 
-	auto weights = W.replicate(1, N(l)).array();
+	auto weights = W.replicate(1, N(l) + 1).array();
 	
 	Arrld loss = (weights * casted_m_greater + ((double) 1 / L) * weights * casted_m_equal).cast<long double>();
 
@@ -179,13 +158,11 @@ long double CB::get_best_hist_loss(size_t time, size_t l) {
 		H = hist_loss(l).transpose();
 	}
 
-
 	// for each possible amount of troops
 	for (size_t j = 0; j <= N(l); ++j) {
 		//pi(j, 0) = 0;
 		// for each battlefield
 		pi(j, 0) = H(Eigen::seq(0, j), 0).minCoeff();
-		//pi(j, Eigen::seq(1, k - 1)) = (pi(Eigen::seq(0, j), Eigen::seq(0, k - 2)) + H(Eigen::seq(j, 0, Eigen::fix<-1>), Eigen::seq(0, k - 1))).colwise().minCoeff();
 		
 		for (size_t i = 1; i < k; ++i) {
 			long double min = (pi(Eigen::seq(0, j), i - 1) + H(Eigen::seq(j, 0, Eigen::fix<-1>), i)).minCoeff();	
@@ -194,35 +171,5 @@ long double CB::get_best_hist_loss(size_t time, size_t l) {
 		
 	}
 
-	// UNCOMMENT IF YOU WANT THE ACTUAL STRATEGY THAT ACHIEVES THE MIN LOSS, NOT THE MIN LOSS
-	//std::cout << "Predicted min loss: " << pi[N[l]][k - 1] << '\n';
-	/*
-	int j = N[l];
-
-	// loop through battlefields going backwards
-	for (int i = k - 1; i >= 0; --i) {
-		long double min = DBL_MAX;
-		int argmin = -1;
-
-		if (i > 0) {
-			for (int t = 0; t <= j; ++t) {
-				if (pi[j - t][i - 1] + H[t][i] < min) {
-					min = pi[j - t][i - 1] + H[t][i];
-					argmin = t;
-				}
-			}
-			br[i] = argmin;
-			j -= br[i];
-		}
-		else {
-			br[i] = j;
-		}
-	}
-	long double s = 0;
-	for (size_t h = 0; h < k; ++h) {
-		s += hist_loss[l][h][br[h]];
-	}
-	//std::cout << "Actual min loss: " << s << '\n';
-	*/
-	return pi(N[l], k - 1);
+	return pi(N(l), k - 1);
 }

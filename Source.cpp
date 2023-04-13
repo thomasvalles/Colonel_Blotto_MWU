@@ -7,6 +7,8 @@
 #include<thread>
 #include<random>
 #include<cmath>
+#include<filesystem>
+
 
 /**
 Runs a specified test. Outputs test results to file named by parameters
@@ -24,24 +26,11 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 	Eigen::VectorXd w(battles);
 
 	if (random) {
-		/*
-		std::random_device rd;  // Will be used to obtain a seed for the random number engine
-		std::mt19937 engine(rd()); // Standard mersenne_twister_engine seeded with rd()
-		std::uniform_real_distribution<> dis(0.0, 1.0);
-
-		auto gen = [&dis, &engine]() {
-			return dis(engine);
-		};
-
-
-		std::generate(std::begin(w), std::end(w), gen);
-		*/
-		std::srand((unsigned int)time(0));
+		//std::srand((unsigned int)time(0));
 		w = 0.5 * Eigen::VectorXd::Random(battles).array() + 0.5;
 	}
 	else {
 		w = Eigen::VectorXd::Constant(battles, 1);
-		//std::fill(w.begin(), w.end(), 1);
 	}
 
 
@@ -52,8 +41,9 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 	int it = test.run();
 	auto end = std::chrono::high_resolution_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - begin);
+	std::filesystem::create_directory("results");
 
-	std::string file_name = "k_" + std::to_string(battles) + "_n_" + std::to_string(soldiers[0]) +
+	std::string file_name = "results//k_" + std::to_string(battles) + "_n_" + std::to_string(soldiers[0]) +
 		"_opt_" + std::to_string(optimistic) + "_rand_" + std::to_string(random) + ".txt";
 
 	thread_local std::ofstream f;
@@ -79,11 +69,21 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 	f << "Average regret: " << std::to_string(avg_reg) << '\n';
 
-	f << "Runtime: " << std::to_string(elapsed.count()) << " seconds" << '\n' << '\n';
+	int total_seconds = elapsed.count();
+	int hours = total_seconds / 3600;
+	total_seconds -= hours * 3600;
+
+	int minutes = total_seconds / 60;
+	total_seconds -= minutes * 60;
+
+	f << "Runtime: " << std::to_string(hours) << "h "
+					 << std::to_string(minutes) << "m " 
+					 << std::to_string(total_seconds) << "s " << '\n' << '\n';
 
 	f << "Last 3 rounds: " << '\n';
 
 	for (size_t i = it - 2; i <= it; ++i) {
+        f << "t = " << i << ": " << '\n';
 		for (size_t j = 0; j < l; ++j) {
 			for (size_t h = 0; h < battles; ++h) {
 				f << test.get_strategies()(j)(i, h) << " ";
@@ -96,33 +96,36 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 }
 
 int main() {
-
-
-	
+    
 	//MAIN TESTS:
-	bool optimistic = true;
-	bool random_weights = true;
-	size_t tmax = 10000;
+	std::vector<bool> tf = { true, false };
+	size_t tmax = 12000;
+	int max_soldiers = 5000;
+	int max_battles = 200;
 	std::vector< std::unique_ptr< std::thread > > threads;
-	//														battles, soldiers, optimistic, random weights
 
 	// max number of soldiers
-	threads.emplace_back(std::make_unique<std::thread>(run_test, 10, Eigen::Vector2i::Constant(2, 500), !optimistic, random_weights, tmax));
-	threads.emplace_back(std::make_unique<std::thread>(run_test, 20, Eigen::Vector2i::Constant(2, 500), !optimistic, random_weights, tmax));
-	threads.emplace_back(std::make_unique<std::thread>(run_test, 30, Eigen::Vector2i::Constant(2, 500), !optimistic, random_weights, tmax));
+	for (size_t i = 0; i < 2; ++i) {
+		for (size_t j = 0; j < 2; ++j) {
+			threads.emplace_back(std::make_unique<std::thread>(run_test, 10, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, 20, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, 30, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
+		}	
+	}
 
-	// max number of battles
-	/*
-	threads.emplace_back(std::make_unique<std::thread>(run_test, 100, std::vector<int> {100, 100}, !optimistic, random_weights));
-	threads.emplace_back(std::make_unique<std::thread>(run_test, 100, std::vector<int> {200, 200}, !optimistic, random_weights));
-	threads.emplace_back(std::make_unique<std::thread>(run_test, 100, std::vector<int> {300, 300}, !optimistic, random_weights));
-	*/
+	// max number of battles 
+	for (size_t i = 0; i < 2; ++i) {
+		for (size_t j = 0; j < 2; ++j) {
+			threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, max_battles), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, 2 * max_battles), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, 3 * max_battles), tf[i], tf[j], tmax));
+		}
+
+	}
+
 	for (auto& t : threads) { // join all the threads
 		t->join();
 	}
-
-	
-
 
 	/*
 	//TABLE:
@@ -191,7 +194,7 @@ int main() {
 	size_t k = 10;
 	size_t T0 = 100;
 	double tol = 0.1;
-	bool optimistic = false;
+	bool optimistic = true;
 	auto n = Eigen::VectorXi::Constant(2, 20);
 	//auto w = Eigen::VectorXd::Constant(k, 1);
 	Eigen::VectorXd w{ {1, 1, 5, 1, 1, 1, 1, 1, 1, 5} };
@@ -208,7 +211,7 @@ int main() {
 
 
 	std::ofstream f1;
-	std::string file_name_1 = "C:\\Users\\tom13\\Desktop\\FA21\\cb\\regrets.txt";
+	std::string file_name_1 = "regrets.txt";
 	f1.open(file_name_1, 'w');
 	for (auto el : test.get_regrets()) {
 		f1 << std::to_string(el) << '\n';
@@ -216,7 +219,7 @@ int main() {
 	f1.close();
 
 	std::ofstream f2;
-	std::string file_name_2 = "C:\\Users\\tom13\\Desktop\\FA21\\cb\\times.txt";
+	std::string file_name_2 = "times.txt";
 	f2.open(file_name_2, 'w');
 	for (size_t i = 0; i <= it; ++i) {
 		if ((i) % T0 == 0) {
@@ -226,7 +229,7 @@ int main() {
 	f2.close();
 
 	std::ofstream f3;
-	std::string file_name_3 = "C:\\Users\\tom13\\Desktop\\FA21\\cb\\stats_0.txt";
+	std::string file_name_3 = "stats.txt";
 	f3.open(file_name_3, 'w');
 	f3 << "Battles: " << std::to_string(k) << '\n';
 	f3 << "Soldiers: [" << std::to_string(n[0]) << ", " << std::to_string(n[1]) << ']' << '\n';
@@ -243,21 +246,6 @@ int main() {
 		f3 << '\n' << '\n';
 	}
 	f3.close();
-
-	/*
-	std::cout << "First strategy less than tolerance: " << '\n';
-	for (int i = 0; i < test.regrets.size(); ++i) {
-		if (test.regrets[i] < 0.1) {
-			std::cout << i*T0 << '\n';
-			for (size_t j = 0; j < l; ++j) {
-				for (size_t h = 0; h < k; ++h) {
-					std::cout << test.strategies[i*T0][j][h] << " ";
-				}
-				std::cout << '\n';
-			}
-			break;
-		}
-	}
 	*/
 
 	return 0;

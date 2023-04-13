@@ -5,8 +5,6 @@
 #include<numeric>
 #include<random>
 #include<Eigen>
-//#include<Tensor.h>
-//#include<unsupported\Eigen\CXX11\Tensor>
 #include<time.h>
 
 typedef Eigen::Vector< long double, Eigen::Dynamic                > Vecld;
