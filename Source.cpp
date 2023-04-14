@@ -100,8 +100,8 @@ int main() {
 	//MAIN TESTS:
 	std::vector<bool> tf = { true, false };
 	size_t tmax = 12000;
-	int max_soldiers = 5000;
-	int max_battles = 200;
+	int max_soldiers = 7500;
+	int max_battles = 250;
 	std::vector< std::unique_ptr< std::thread > > threads;
 
 	// max number of soldiers
