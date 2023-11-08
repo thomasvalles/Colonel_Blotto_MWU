@@ -28,3 +28,5 @@ Gets a random partition of an integer n into k parts. May have zeros.
 @return: Vector of length k representing the partition. Sum of elements is n.
 */
 Eigen::ArrayXi rand_comp_n_k(int n, int k);
+
+double incbeta(double a, double b, double x);
