@@ -1,7 +1,5 @@
 #include "CB.h"
 #include "Part.h"
-//#include "Helper.h"
-//#include<thread>
 
 CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[], 
 	double _beta, size_t _T0, double _tol, bool _optimistic,
@@ -23,21 +21,9 @@ CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[],
 		}
 	}
 
-	/*
-	std::cout << sizeof(_N) / sizeof(int) << '\n' << L;
-	if (sizeof(_N) / sizeof(int) != L) {
-		throw(std::runtime_error("Incorrect size of soldiers array"));
-	}
-	std::cout << sizeof(_W) / sizeof(double) << '\n' << k;
-	if (sizeof(_W) / sizeof(double) != k) {
-		throw(std::runtime_error("Incorrect size of values array"));
-	}
-	*/
-
 
 	N = Eigen::Map<Eigen::VectorXi>(_N, L);
 	W = Eigen::Map<Eigen::VectorXd>(_W, k);
-	//s0 = Eigen::Map<Eigen::VectorXi>(_s0, k);
 	std::srand((unsigned int)time(0));
 
 	//(player)(time, battlefield)
@@ -692,17 +678,14 @@ void CB::run_test(std::string prefix, std::string suffix) {
 //double beta = 0.95;
 
 	auto begin = std::chrono::high_resolution_clock::now();
-	//auto test = CB(TMAX, L, k, N, W, beta, T0, tol, optimistic);
 	int it = this->run();
 	auto end = std::chrono::high_resolution_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - begin);
-	//std::filesystem::create_directory("results");
 
 	auto reg = this->get_regrets();
-	//std::string file_name = "results//k_" + std::to_string(battles) + "_n_" + std::to_string(soldiers[0]) +
-	//	"_opt_" + std::to_string(optimistic) + "_rand_" + std::to_string(random) + ".txt";
-	std::string file_name = prefix + "res_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_"  + std::to_string(init_factor) + "_" + suffix +  ".txt";
+
+	std::string file_name = prefix + "results_k-" + std::to_string(k) + "_n-" + std::to_string(N[0]) +
+		"_optimistic-" + std::to_string(optimistic) + "_init-" + std::to_string(init) + "_loss-" + std::to_string(lt) + "_I0-"  + std::to_string(init_factor) + "_" + suffix +  ".txt";
 
 
 	thread_local std::ofstream f;
@@ -819,8 +802,8 @@ void CB::run_test(std::string prefix, std::string suffix) {
 
 	//std::filesystem::create_directory("regrets");
 	std::ofstream f1;
-	std::string file_name_1 = prefix + "reg_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_" + std::to_string(init_factor) + "_" + suffix + ".txt";
+	std::string file_name_1 = prefix + "regrets_k-" + std::to_string(k) + "_n-" + std::to_string(N[0]) +
+		"_optimistic-" + std::to_string(optimistic) + "_init-" + std::to_string(init) + "_loss-" + std::to_string(lt) + "_I0-" + std::to_string(init_factor) + "_" + suffix + ".txt";
 
 	f1.open(file_name_1);
 
