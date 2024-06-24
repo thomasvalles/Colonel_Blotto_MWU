@@ -51,13 +51,13 @@ int main() {
 		W[i] = rand() % 100 + 1; // Random integer between 1 and 100
 	}
 
-	// type of initialization
+	// type of initialization, one of: uniform, proportional, three_halves,
 	CB::init_type initialization_type = CB::init_type::uniform;
 
 	// doing no initialization
 	size_t initialization_factor = 0;
 
-	// loss type
+	// loss type, one of: zero_one, popular_vote, electoral_vote, or ev_adj
 	CB::loss_type winning_rule = CB::loss_type::zero_one;
 
 	// can use a fixed strategy, if you don't want player a to use a fixed strategy,
