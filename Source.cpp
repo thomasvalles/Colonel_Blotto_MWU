@@ -11,7 +11,7 @@
 
 
 int main() {
-	
+
 	// if using "optimistic" update rule
 	bool optimistic = false;
 
@@ -22,7 +22,8 @@ int main() {
 	size_t l = 2;
 
 	// number of battles
-	size_t k = 5;
+	const int array_size = 5;
+	size_t k = array_size;
 
 	// calculate regret after this many rounds
 	size_t t0 = 100;
@@ -37,19 +38,18 @@ int main() {
 	// make sure this has as many elements as there are soldiers (L)!
 	int N[] = { 20, 20 };
 
-	const int arraySize = 5;
-
 	// battlefield weights, for now, just set to random integers
 	// make sure this has as many elements as battlefields (k)!
-	double W[arraySize];
+	double W[array_size];
 
 	// Seed the random number generator
-	srand(static_cast<unsigned>(time(0)));
+	//srand(static_cast<unsigned>(time(0)));
 
 	// Generating random integers from 1 to 100 and storing them in the array
-	for (int i = 0; i < arraySize; ++i) {
+	for (int i = 0; i < array_size; ++i) {
 		W[i] = rand() % 100 + 1; // Random integer between 1 and 100
 	}
+
 
 	// type of initialization, one of: uniform, proportional, three_halves,
 	CB::init_type initialization_type = CB::init_type::uniform;
@@ -65,18 +65,18 @@ int main() {
 	Eigen::ArrayXi fixed_strategy(0);
 	//fixed_strategy << 4, 4, 4, 4, 4;
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	// directory to write log file to 
 	std::string prefix = "C://Users//tom13//Desktop//FA21//cb//results//";
 
 	// test postfix
-	std::string suffix = "0623_test";
+	std::string suffix = "0623_testb";
 	auto test_2 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, initialization_type, initialization_factor, winning_rule, fixed_strategy);
 	test_2.run_test(prefix, suffix);
 
 
-	
+
 
 
 
@@ -185,57 +185,57 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 }
 */
 
-	//double W[] = { 1, 5};
-	//double W[] = { 1, 2, 3, 5, 9 };
-	//double W[] = { 42, 68, 35, 1, 70 };
-	//double W[] = { 1, 9};
-	//double W[] = { 10, 10, 10, 10, 10, 10 };
-	//double W[] = { 16, 16, 11, 15, 10, 19 }; //NC, GA, AZ, MI, WI, PA
-	//auto w = 0.5 * Eigen::VectorXd::Random(k).array() + 0.5;
+//double W[] = { 1, 5};
+//double W[] = { 1, 2, 3, 5, 9 };
+//double W[] = { 42, 68, 35, 1, 70 };
+//double W[] = { 1, 9};
+//double W[] = { 10, 10, 10, 10, 10, 10 };
+//double W[] = { 16, 16, 11, 15, 10, 19 }; //NC, GA, AZ, MI, WI, PA
+//auto w = 0.5 * Eigen::VectorXd::Random(k).array() + 0.5;
 
-	//int N[] = { 45, 61 }; //2020
-	//int N[] = { 114, 98 }; //2008
+//int N[] = { 45, 61 }; //2020
+//int N[] = { 114, 98 }; //2008
 
-	//double W[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+//double W[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-	//double W[] = { 1, 2, 3, 5, 9 };
-	//double W[] = {42, 68, 35, 1, 70};
-	//double W[] = { 20, 16, 15, 29, 16, 18, 11, 10 }; //PA, MI, NC, FL, GA, OH, AZ, WI //2020
-	//double W[] = { 9, 27, 5, 5, 20, 4, 21, 3, 13 }; // CO, FL, NM, NV, OH, NH, PA, MO, VA //2008
+//double W[] = { 1, 2, 3, 5, 9 };
+//double W[] = {42, 68, 35, 1, 70};
+//double W[] = { 20, 16, 15, 29, 16, 18, 11, 10 }; //PA, MI, NC, FL, GA, OH, AZ, WI //2020
+//double W[] = { 9, 27, 5, 5, 20, 4, 21, 3, 13 }; // CO, FL, NM, NV, OH, NH, PA, MO, VA //2008
 
-	//double W[] = { 1, 1, 1, 1, 1 };
+//double W[] = { 1, 1, 1, 1, 1 };
 
-	//double W[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),  1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
+//double W[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),  1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
 
-	//auto test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::ev_adj);
-	//test_1.run_test();
+//auto test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::ev_adj);
+//test_1.run_test();
 
-	
-	//auto test_3 = CB(tmax, l, k, N, W, beta, t0, tol, !optimistic, CB::init_type::uniform, 0, CB::loss_type::popular_vote);
-	//test_3.run_test();
-	//auto test_4 = CB(tmax, l, k, N, W, beta, t0, tol, !optimistic, CB::init_type::uniform, 0, CB::loss_type::electoral_vote);
-	//test_4.run_test();
 
-	/*
+//auto test_3 = CB(tmax, l, k, N, W, beta, t0, tol, !optimistic, CB::init_type::uniform, 0, CB::loss_type::popular_vote);
+//test_3.run_test();
+//auto test_4 = CB(tmax, l, k, N, W, beta, t0, tol, !optimistic, CB::init_type::uniform, 0, CB::loss_type::electoral_vote);
+//test_4.run_test();
 
-	test_2 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-	test_2.run_test();
+/*
 
-	test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::popular_vote);
-	test_3.run_test();
+test_2 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+test_2.run_test();
 
-	test_4 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::electoral_vote);
-	test_4.run_test();
-	
+test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::popular_vote);
+test_3.run_test();
+
+test_4 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::electoral_vote);
+test_4.run_test();
+
+*/
+
+/*{45, 41, 27, 26, 26, 25, 21, 17, 17, 14,
+	13, 13, 12, 12, 12, 11, 10, 10, 10, 10,
+	9, 9, 9, 8, 8, 8, 8, 7, 7, 7,
+	6, 6, 6, 6, 5, 4, 4, 4, 4, 4,
+	4, 4, 4, 4, 3, 3, 3, 3, 3, 3,
+	3};
 	*/
-
-	/*{45, 41, 27, 26, 26, 25, 21, 17, 17, 14,
-		13, 13, 12, 12, 12, 11, 10, 10, 10, 10,
-		9, 9, 9, 8, 8, 8, 8, 7, 7, 7,
-		6, 6, 6, 6, 5, 4, 4, 4, 4, 4,
-		4, 4, 4, 4, 3, 3, 3, 3, 3, 3,
-		3};
-		*/
 
 	int s0[] = { 45, 41, 27, 26, 26, 25, 21, 17, 17, 14,
 		13, 13, 12, 12, 12, 11, 10, 10, 10, 10,
@@ -260,13 +260,13 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 	test_1.run_test();
 	*/
 
-	
+
 
 	for (size_t i = 0; i < 1; ++i) {
 		//optimistic = (i == 0) ? true : false;
 
 		size_t init_factor = 500;
-		
+
 		/*
 		CB test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::zero_one);
 		test_1.run_test();
@@ -276,8 +276,8 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		CB test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::zero_one);
 		test_3.run_test();
-		
-		
+
+
 		CB test_4 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::popular_vote);
 		test_4.run_test();
 
@@ -286,7 +286,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		CB test_6 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::popular_vote);
 		test_6.run_test();
-		
+
 
 		CB test_7 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::electoral_vote);
 		test_7.run_test();
@@ -297,13 +297,13 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 		CB test_9 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::electoral_vote);
 		test_9.run_test();
 		*/
-		
+
 		//******************************************************************************
-		
+
 		init_factor = 1000;
-		
+
 		/*
-		
+
 		test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::zero_one);
 		test_1.run_test();
 
@@ -312,7 +312,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::zero_one);
 		test_3.run_test();
-		
+
 		test_4 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::popular_vote);
 		test_4.run_test();
 
@@ -321,7 +321,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_6 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::popular_vote);
 		test_6.run_test();
-		
+
 
 		test_7 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::electoral_vote);
 		test_7.run_test();
@@ -345,7 +345,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::zero_one);
 		test_3.run_test();
-		
+
 		test_4 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::popular_vote);
 		test_4.run_test();
 
@@ -354,7 +354,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_6 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::popular_vote);
 		test_6.run_test();
-		
+
 		test_7 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::electoral_vote);
 		test_7.run_test();
 
@@ -363,13 +363,13 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_9 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::electoral_vote);
 		test_9.run_test();
-		
+
 		*/
 		//******************************************************************************
 		init_factor = 5000;
-		
+
 		/*
-		
+
 		test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::zero_one);
 		test_1.run_test();
 
@@ -378,7 +378,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::zero_one);
 		test_3.run_test();
-		
+
 		test_4 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::popular_vote);
 		test_4.run_test();
 
@@ -387,7 +387,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 
 		test_6 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::popular_vote);
 		test_6.run_test();
-		
+
 
 
 		test_7 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::electoral_vote);
@@ -399,254 +399,254 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 		test_9 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::three_halves, init_factor, CB::loss_type::electoral_vote);
 		test_9.run_test();
 		*/
-		
+
 		/***************************************************************************/
 		init_factor = 0;
-		
+
 		/*
 		test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::zero_one);
 		test_1.run_test();
-		
+
 		test_2 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::popular_vote);
 		test_2.run_test();
-		
+
 		CB test_3 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, init_factor, CB::loss_type::electoral_vote);
 		test_3.run_test();
-		
+
 		*/
 	}
-			
-
-			//run_test(battles, Eigen::Vector2i::Constant(2, soldiers), optimistic, random, tmax);
 
 
-			/*
-			//MAIN TESTS:
-			std::vector<bool> tf = { true, false };
-			size_t tmax = 12000;
-			int max_soldiers = 50;
-			int max_battles = 10;
-			std::vector< std::unique_ptr< std::thread > > threads;
+	//run_test(battles, Eigen::Vector2i::Constant(2, soldiers), optimistic, random, tmax);
 
-			// max number of soldiers
-			for (size_t i = 0; i < 2; ++i) {
-				for (size_t j = 0; j < 2; ++j) {
-					threads.emplace_back(std::make_unique<std::thread>(run_test, 10, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
-					threads.emplace_back(std::make_unique<std::thread>(run_test, 20, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
-					threads.emplace_back(std::make_unique<std::thread>(run_test, 30, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
-				}
-			}
 
-			// max number of battles
-			for (size_t i = 0; i < 2; ++i) {
-				for (size_t j = 0; j < 2; ++j) {
-					threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, max_battles), tf[i], tf[j], tmax));
-					threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, 2 * max_battles), tf[i], tf[j], tmax));
-					threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, 3 * max_battles), tf[i], tf[j], tmax));
-				}
-
-			}
-
-			for (auto& t : threads) { // join all the threads
-				t->join();
-			}
-		*/
-
-		//TABLE:
 	/*
-	size_t tmax = 20000;
+	//MAIN TESTS:
+	std::vector<bool> tf = { true, false };
+	size_t tmax = 12000;
+	int max_soldiers = 50;
+	int max_battles = 10;
+	std::vector< std::unique_ptr< std::thread > > threads;
+
+	// max number of soldiers
+	for (size_t i = 0; i < 2; ++i) {
+		for (size_t j = 0; j < 2; ++j) {
+			threads.emplace_back(std::make_unique<std::thread>(run_test, 10, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, 20, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, 30, Eigen::Vector2i::Constant(2, max_soldiers), tf[i], tf[j], tmax));
+		}
+	}
+
+	// max number of battles
+	for (size_t i = 0; i < 2; ++i) {
+		for (size_t j = 0; j < 2; ++j) {
+			threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, max_battles), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, 2 * max_battles), tf[i], tf[j], tmax));
+			threads.emplace_back(std::make_unique<std::thread>(run_test, max_battles, Eigen::Vector2i::Constant(2, 3 * max_battles), tf[i], tf[j], tmax));
+		}
+
+	}
+
+	for (auto& t : threads) { // join all the threads
+		t->join();
+	}
+*/
+
+//TABLE:
+/*
+size_t tmax = 20000;
+size_t l = 2;
+size_t T0 = 100;
+double tol = 0.05;
+double beta = 0.95;
+bool optimistic = true;
+
+
+
+std::vector<size_t> battles = { 10, 15, 20 };
+//Eigen::Vector3<double[]> weights = { { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } ,
+//{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+//{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
+
+
+	const int rows = 6;
+	const int cols = 2;
+	int soldiers[rows][cols] = { {20, 20}, {20, 25}, {20,30}, {25, 25}, {25, 30}, {30, 30} };
+
+	std::vector<size_t> iterations;
+	std::vector<long double> times;
+
+
+	std::ofstream f;
+	std::string file_name = "C://Users//tom13//Desktop//FA21//cb//table_new.txt";
+	f.open(file_name, 'w');
+	f << "Battles" << " & " << "Soldiers" << " & " << "Time Standard Update (s)" << " & "  << "Time Optimistic Update(s)" << '\n';
+	//double asdf[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	//CB game = CB(tmax, 2, battles[0], soldiers[0], asdf, beta, T0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+	//game.run_test();
+	int n = 1;
+	//std::cout << soldiers.row(0);
+
+
+	for (size_t i = 0; i < battles.size(); ++i) {
+		for (size_t j = 0; j < rows; ++j) {
+			long double it_avg = 0;
+			long double time_avg_not = 0;
+			long double time_avg_opt = 0;
+			//double weights[10];
+			for (size_t h = 0; h < n; ++h) {
+				if (i == 0) {
+					bool opt = 0;
+					std::cout << 1 + (rand() % 100) << '\n';
+					double weights[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
+										1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
+					auto begin = std::chrono::high_resolution_clock::now();
+					CB game = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+					int it = game.run();
+					auto end = std::chrono::high_resolution_clock::now();
+					auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+					it_avg += it;
+					double time_not = elapsed.count() / 1000.0;
+					time_avg_not += std::round(time_not / 0.001) * 0.001 ;
+
+					opt = 1;
+					begin = std::chrono::high_resolution_clock::now();
+					CB game_2 = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+					it = game_2.run();
+					end = std::chrono::high_resolution_clock::now();
+					elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+					double time_opt = elapsed.count() / 1000.0;
+					time_avg_opt += std::round(time_opt / 0.001) * 0.001;
+
+
+				}
+				else if (i == 1) {
+					bool opt = 0;
+					double weights[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
+										1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
+										1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
+					auto begin = std::chrono::high_resolution_clock::now();
+					CB game = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+					int it = game.run();
+					auto end = std::chrono::high_resolution_clock::now();
+					auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+					it_avg += it;
+					double time_not = elapsed.count() / 1000.0;
+					time_avg_not += std::round(time_not / 0.001) * 0.001;
+
+					opt = 1;
+					begin = std::chrono::high_resolution_clock::now();
+					CB game_2 = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+					it = game_2.run();
+					end = std::chrono::high_resolution_clock::now();
+					elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+					double time_opt = elapsed.count() / 1000.0;
+					time_avg_opt += std::round(time_opt / 0.001) * 0.001;
+				}
+				else {
+					bool opt = 0;
+					double weights[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
+										1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
+										1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
+										1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
+					auto begin = std::chrono::high_resolution_clock::now();
+					CB game = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+					int it = game.run();
+					auto end = std::chrono::high_resolution_clock::now();
+					auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+					it_avg += it;
+					double time_not = elapsed.count() / 1000.0 ;
+					time_avg_not += std::round(time_not / 0.001) * 0.001;
+
+					opt = 1;
+					begin = std::chrono::high_resolution_clock::now();
+					CB game_2 = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
+					it = game_2.run();
+					end = std::chrono::high_resolution_clock::now();
+					elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+					double time_opt = elapsed.count() / 1000.0;
+					time_avg_opt += std::round(time_opt / 0.001) * 0.001;
+				}
+
+
+
+			}
+			it_avg /= n;
+			time_avg_not /= n;
+			time_avg_opt /= n;
+			f << std::to_string(battles[i]) << " " << '&' << "{[}"
+				<< std::to_string(soldiers[j][0]) << ", " << std::to_string(soldiers[j][1]) << "{]}" << " & " ;
+
+			f << std::to_string(time_avg_not) << " & " << std::to_string(time_avg_opt) << '\n';
+		}
+	}
+
+	f.close();
+
+
+	*/
+
+	// FOR PLOTTING REGRETS
+	/*
+	size_t t = 5000;
 	size_t l = 2;
+	size_t k = 10;
 	size_t T0 = 100;
-	double tol = 0.05;
-	double beta = 0.95;
+	double tol = 0.1;
 	bool optimistic = true;
+	auto n = Eigen::VectorXi::Constant(2, 20);
+	//auto w = Eigen::VectorXd::Constant(k, 1);
+	Eigen::VectorXd w{ {1, 1, 5, 1, 1, 1, 1, 1, 1, 5} };
+
+	double beta = 0.95;
+
+	auto begin = std::chrono::high_resolution_clock::now();
+	auto test = CB(t, l, k, n, w, beta, T0, tol, optimistic);
+
+	int it = test.run();
+	auto end = std::chrono::high_resolution_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - begin);
 
 
 
-	std::vector<size_t> battles = { 10, 15, 20 };
-	//Eigen::Vector3<double[]> weights = { { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } ,
-	//{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-	//{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
+	std::ofstream f1;
+	std::string file_name_1 = "regrets.txt";
+	f1.open(file_name_1, 'w');
+	for (auto el : test.get_regrets()) {
+		f1 << std::to_string(el) << '\n';
+	}
+	f1.close();
 
+	std::ofstream f2;
+	std::string file_name_2 = "times.txt";
+	f2.open(file_name_2, 'w');
+	for (size_t i = 0; i <= it; ++i) {
+		if ((i) % T0 == 0) {
+			f2 << std::to_string(i) << '\n';
+		}
+	}
+	f2.close();
 
-		const int rows = 6;
-		const int cols = 2;
-		int soldiers[rows][cols] = { {20, 20}, {20, 25}, {20,30}, {25, 25}, {25, 30}, {30, 30} };
-
-		std::vector<size_t> iterations;
-		std::vector<long double> times;
-
-
-		std::ofstream f;
-		std::string file_name = "C://Users//tom13//Desktop//FA21//cb//table_new.txt";
-		f.open(file_name, 'w');
-		f << "Battles" << " & " << "Soldiers" << " & " << "Time Standard Update (s)" << " & "  << "Time Optimistic Update(s)" << '\n';
-		//double asdf[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-		//CB game = CB(tmax, 2, battles[0], soldiers[0], asdf, beta, T0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-		//game.run_test();
-		int n = 1;
-		//std::cout << soldiers.row(0);
-
-
-		for (size_t i = 0; i < battles.size(); ++i) {
-			for (size_t j = 0; j < rows; ++j) {
-				long double it_avg = 0;
-				long double time_avg_not = 0;
-				long double time_avg_opt = 0;
-				//double weights[10];
-				for (size_t h = 0; h < n; ++h) {
-					if (i == 0) {
-						bool opt = 0;
-						std::cout << 1 + (rand() % 100) << '\n';
-						double weights[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
-											1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
-						auto begin = std::chrono::high_resolution_clock::now();
-						CB game = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-						int it = game.run();
-						auto end = std::chrono::high_resolution_clock::now();
-						auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-						it_avg += it;
-						double time_not = elapsed.count() / 1000.0;
-						time_avg_not += std::round(time_not / 0.001) * 0.001 ;
-
-						opt = 1;
-						begin = std::chrono::high_resolution_clock::now();
-						CB game_2 = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-						it = game_2.run();
-						end = std::chrono::high_resolution_clock::now();
-						elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-						double time_opt = elapsed.count() / 1000.0;
-						time_avg_opt += std::round(time_opt / 0.001) * 0.001;
-
-
-					}
-					else if (i == 1) {
-						bool opt = 0;
-						double weights[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
-											1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
-											1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
-						auto begin = std::chrono::high_resolution_clock::now();
-						CB game = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-						int it = game.run();
-						auto end = std::chrono::high_resolution_clock::now();
-						auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-						it_avg += it;
-						double time_not = elapsed.count() / 1000.0;
-						time_avg_not += std::round(time_not / 0.001) * 0.001;
-
-						opt = 1;
-						begin = std::chrono::high_resolution_clock::now();
-						CB game_2 = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-						it = game_2.run();
-						end = std::chrono::high_resolution_clock::now();
-						elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-						double time_opt = elapsed.count() / 1000.0;
-						time_avg_opt += std::round(time_opt / 0.001) * 0.001;
-					}
-					else {
-						bool opt = 0;
-						double weights[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
-											1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),
-											1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 
-											1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
-						auto begin = std::chrono::high_resolution_clock::now();
-						CB game = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-						int it = game.run();
-						auto end = std::chrono::high_resolution_clock::now();
-						auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-						it_avg += it;
-						double time_not = elapsed.count() / 1000.0 ;
-						time_avg_not += std::round(time_not / 0.001) * 0.001;
-
-						opt = 1;
-						begin = std::chrono::high_resolution_clock::now();
-						CB game_2 = CB(tmax, 2, battles[i], soldiers[j], weights, beta, T0, tol, opt, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-						it = game_2.run();
-						end = std::chrono::high_resolution_clock::now();
-						elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-						double time_opt = elapsed.count() / 1000.0;
-						time_avg_opt += std::round(time_opt / 0.001) * 0.001;
-					}
-
-
-
-				}
-				it_avg /= n;
-				time_avg_not /= n;
-				time_avg_opt /= n;
-				f << std::to_string(battles[i]) << " " << '&' << "{[}" 
-					<< std::to_string(soldiers[j][0]) << ", " << std::to_string(soldiers[j][1]) << "{]}" << " & " ;
-
-				f << std::to_string(time_avg_not) << " & " << std::to_string(time_avg_opt) << '\n';
+	std::ofstream f3;
+	std::string file_name_3 = "stats.txt";
+	f3.open(file_name_3, 'w');
+	f3 << "Battles: " << std::to_string(k) << '\n';
+	f3 << "Soldiers: [" << std::to_string(n[0]) << ", " << std::to_string(n[1]) << ']' << '\n';
+	f3 << "Iterations: " << it << '\n';
+	f3 << "Runtime: " << std::to_string(elapsed.count()) << '\n' << '\n';
+	f3 << "Last 3 rounds: " << '\n';
+	for (size_t i = it - 2; i <= it; ++i) {
+		for (size_t j = 0; j < l; ++j) {
+			for (size_t h = 0; h < k; ++h) {
+				f3 << test.get_strategies()(j)(i, h) << " ";
 			}
+			f3 << '\n';
 		}
-
-		f.close();
-
-
-		*/
-		
-		// FOR PLOTTING REGRETS
-		/*
-		size_t t = 5000;
-		size_t l = 2;
-		size_t k = 10;
-		size_t T0 = 100;
-		double tol = 0.1;
-		bool optimistic = true;
-		auto n = Eigen::VectorXi::Constant(2, 20);
-		//auto w = Eigen::VectorXd::Constant(k, 1);
-		Eigen::VectorXd w{ {1, 1, 5, 1, 1, 1, 1, 1, 1, 5} };
-
-		double beta = 0.95;
-
-		auto begin = std::chrono::high_resolution_clock::now();
-		auto test = CB(t, l, k, n, w, beta, T0, tol, optimistic);
-
-		int it = test.run();
-		auto end = std::chrono::high_resolution_clock::now();
-		auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - begin);
+		f3 << '\n' << '\n';
+	}
+	f3.close();
+	*/
 
 
-
-		std::ofstream f1;
-		std::string file_name_1 = "regrets.txt";
-		f1.open(file_name_1, 'w');
-		for (auto el : test.get_regrets()) {
-			f1 << std::to_string(el) << '\n';
-		}
-		f1.close();
-
-		std::ofstream f2;
-		std::string file_name_2 = "times.txt";
-		f2.open(file_name_2, 'w');
-		for (size_t i = 0; i <= it; ++i) {
-			if ((i) % T0 == 0) {
-				f2 << std::to_string(i) << '\n';
-			}
-		}
-		f2.close();
-
-		std::ofstream f3;
-		std::string file_name_3 = "stats.txt";
-		f3.open(file_name_3, 'w');
-		f3 << "Battles: " << std::to_string(k) << '\n';
-		f3 << "Soldiers: [" << std::to_string(n[0]) << ", " << std::to_string(n[1]) << ']' << '\n';
-		f3 << "Iterations: " << it << '\n';
-		f3 << "Runtime: " << std::to_string(elapsed.count()) << '\n' << '\n';
-		f3 << "Last 3 rounds: " << '\n';
-		for (size_t i = it - 2; i <= it; ++i) {
-			for (size_t j = 0; j < l; ++j) {
-				for (size_t h = 0; h < k; ++h) {
-					f3 << test.get_strategies()(j)(i, h) << " ";
-				}
-				f3 << '\n';
-			}
-			f3 << '\n' << '\n';
-		}
-		f3.close();
-		*/
-
-
-		return 0;
+	return 0;
 }
