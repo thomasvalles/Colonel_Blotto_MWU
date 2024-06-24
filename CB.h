@@ -163,7 +163,7 @@ private:
 
     Arrld get_reward(size_t t, size_t l);
 
-    double calculate_regret(size_t time);
+    void calculate_regret(size_t time);
 
     double calculate_distance_to_eq(size_t time);
 
