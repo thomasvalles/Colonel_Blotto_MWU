@@ -1,5 +1,7 @@
 #include "CB.h"
 #include "Part.h"
+//#include "Helper.h"
+//#include<thread>
 
 CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[], 
 	double _beta, size_t _T0, double _tol, bool _optimistic,
@@ -10,6 +12,11 @@ CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[],
 	init = _init; lt = _lt; init_factor = _init_factor; numerical_correction = TMAX + 2; 
 	regrets  = std::vector<std::vector<long double>>(  (int) (TMAX / T0) + 1, std::vector<long double>(4));
 	//eq_dis = std::vector<std::vector<long double>>((int)(TMAX / T0) + 1, std::vector<long double>(4));
+
+	std::random_device rd;  // Will be used to obtain a seed for the random number engine
+	std::mt19937 generator(rd());
+	gen = generator;// ^ (static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()))); // Standard mersenne_twister_engine seeded with rd()
+
 
 	fixed_strategy = _fixed_strategy;
 	if (fixed_strategy.size() > 0){
@@ -25,20 +32,21 @@ CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[],
 	N = Eigen::Map<Eigen::VectorXi>(_N, L);
 	W = Eigen::Map<Eigen::VectorXd>(_W, k);
 	std::srand((unsigned int)time(0));
+	//std::srand(1);
 
 	//(player)(time, battlefield)
 	strategies = Eigen::Vector<Eigen::ArrayXXi, Eigen::Dynamic>(L);
 
 	//(player)(battlefield, amount)
 	hist_loss = Eigen::Vector<Arrld, Eigen::Dynamic>(L);
-	hist_reward = Eigen::Vector<Arrld, Eigen::Dynamic>(L);
+	//hist_reward = Eigen::Vector<Arrld, Eigen::Dynamic>(L);
 
 	dist = Arrld::Zero(k, N(0) + 1);
 	avg_al = Eigen::ArrayXXd::Zero(2, k);
 	for (size_t i = 0; i < L; ++i) {
 		strategies(i) = Eigen::ArrayXXi::Zero(TMAX + 1, k);
 		hist_loss(i) = Arrld::Zero(k, N(i) + 1);
-		hist_reward(i) = Arrld::Zero(k, N(i) + 1);
+		//hist_reward(i) = Arrld::Zero(k, N(i) + 1);
 	}
 	actual_loss = hist_loss;
 	sum_of_values = W.sum();
@@ -298,7 +306,7 @@ void CB::update_hist_loss(size_t time) {
 			learner_cum_loss[l] += loss(h, strategies(l)(time, h));
 		}
 	
-		hist_reward(l) += get_reward(time - 1, l);
+		//hist_reward(l) += get_reward(time - 1, l);
 
 		if (optimistic) {
 			if (time > 0) {
@@ -329,12 +337,14 @@ void CB::update_hist_loss(size_t time) {
 }
 
 Eigen::VectorXi CB::rwm(size_t t, size_t l) {
-
+	
 	int total = N(l);
 	int remaining = total;
 
 	Eigen::VectorXi battles(k); //will hold number of soldiers to put into each battle
 
+	auto f = get_partition(t, l);
+	
 	// if first round
 	if ( (hist_loss(l).array() == 0).all() ) {
 		//std::cout << "Using random";
@@ -343,7 +353,6 @@ Eigen::VectorXi CB::rwm(size_t t, size_t l) {
 
 	else {
 		auto f = get_partition(t, l);
-
 		//for each battle
 		for (size_t h = k - 1; h > 0; --h) {
 
@@ -358,8 +367,9 @@ Eigen::VectorXi CB::rwm(size_t t, size_t l) {
 			}
 
 			//sample from discrete distribution
-			std::random_device rd;  // Will be used to obtain a seed for the random number engine
-			std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+			//std::random_device rd;  // Will be used to obtain a seed for the random number engine
+			//std::mt19937 gen(rd());// ^ (static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()))); // Standard mersenne_twister_engine seeded with rd()
+			//std::cout << rd() << '\n';
 			std::discrete_distribution<int> dist(weights.data(), weights.data() + weights.size());
 
 			battles(h) = dist(gen);
@@ -367,6 +377,8 @@ Eigen::VectorXi CB::rwm(size_t t, size_t l) {
 		}
 		battles(0) = remaining;
 	}
+
+	
 	return battles;
 }
 
@@ -826,10 +838,6 @@ void CB::run_test(std::string prefix, std::string suffix) {
 	}
 	f1.close();
 	//f2.close();
-
-	
-
-
 }
 
 /*
