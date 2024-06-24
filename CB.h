@@ -32,7 +32,7 @@ public:
     @param beta_: Learning rate in (0, 1)
     @param T0_: Calculate the regret every T0 rounds
     @param optimistic: True if running optimistic rwm
-    @param init: The initialization type, either uniform, proportional, or three halves
+    @param init: The initialization type, either uniform, proportional, or three_halves
     @param init_factor: The number of iterations to use for the warm start
     @param loss_type: The winning rule to use, either zero_one, popular_vote, electoral_vote, or ev_adj
     @param fixed_strategy: The fixed strategy for player a to play (they will use this in every round). Defaults to empty
@@ -70,7 +70,14 @@ public:
         return avg_al;
     }
 
-
+    /**
+    Runs the algorithm on the current object and makes two output files.
+    One of the file contains the regrets calculated for each player 
+    The other is a log file with the "optimal" allocations, time taken to run the test, best regret, etc.
+    The name of the file contains the loss type and initialization type.
+    @param prefix: The prefix of the output file names (directory)
+    @param suffix: The suffix of the output file names (e.g. "test_a")
+    */
     void run_test(std::string prefix, std::string suffix);
 
 
