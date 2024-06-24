@@ -1,8 +1,8 @@
 #include "Part.h"
 
 Eigen::ArrayXi rand_k_el(Eigen::ArrayXi elements, int k) {
-	std::random_device rd;  // Will be used to obtain a seed for the random number engine
-	std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+	//std::random_device rd;  // Will be used to obtain a seed for the random number engine
+	std::mt19937 gen(123); // Standard mersenne_twister_engine seeded with rd()
 	std::uniform_real_distribution<> dis(0.0, 1.0);
 	Eigen::ArrayXi a = Eigen::ArrayXi::Zero(k);
 	
