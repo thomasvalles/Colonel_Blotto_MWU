@@ -88,6 +88,7 @@ private:
     size_t numerical_correction; int sum_of_values; std::vector<double> learner_cum_loss = {0, 0};
     Eigen::ArrayXi fixed_strategy;
     std::vector<double> reward_of_avg = { 0, 0 };
+    std::mt19937 gen;
     
     int get_sum() {
         return sum_of_values;
