@@ -255,7 +255,7 @@ double CB::get_reward_num(int x, int y, size_t h) {
 }
 
 
-double CB::calculate_regret(size_t time) {
+void CB::calculate_regret(size_t time) {
 	double window_length;
 	if (time < numerical_correction) {
 		window_length = (int)time;
