@@ -32,10 +32,15 @@ public:
     @param beta_: Learning rate in (0, 1)
     @param T0_: Calculate the regret every T0 rounds
     @param optimistic: True if running optimistic rwm
+    @param init: The initialization type, either uniform, proportional, or three halves
+    @param init_factor: The number of iterations to use for the warm start
+    @param loss_type: The winning rule to use, either zero_one, popular_vote, electoral_vote, or ev_adj
+    @param fixed_strategy: The fixed strategy for player a to play (they will use this in every round). Defaults to empty
+    player a does not use a fixed strategy.
     */
     CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[], 
         double _beta, size_t _T0, double _tol, bool _optimistic, 
-        init_type _init, size_t _init_factor, loss_type _lt);
+        init_type _init, size_t _init_factor, loss_type _lt, Eigen::ArrayXi _fixed_strategy = Eigen::ArrayXi());
 
     /**
     Simulates the game using the specified parameters
@@ -46,24 +51,9 @@ public:
     /**
     Public strategies getter
     */
-
     auto get_strategies() {
         return strategies;
     }
-
-    /*
-    std::vector<std::vector<std::vector<int>>> get_strategies() {
-        std::vector<std::vector<std::vector<int>>> strats(TMAX, std::vector<std::vector<int>>(L, std::vector<int>(k)));
-        for (size_t i = 0; i < TMAX; ++i) {
-            for (size_t j = 0; j < L; ++j) {
-                for (size_t x = 0; x < k; ++x) {
-                    strats[i][j][x] = strategies(j)(i, x);
-                }
-            }
-        }
-        return strats;
-    }
-    */
 
     /**
     Public regrets getter
@@ -81,7 +71,7 @@ public:
     }
 
 
-    void run_test(); 
+    void run_test(std::string prefix, std::string suffix);
 
 
 private:
@@ -89,6 +79,7 @@ private:
     size_t TMAX; size_t L; size_t k; size_t T0; double tol; bool optimistic; double beta; size_t init_factor;
     Eigen::VectorXi N; Eigen::VectorXd W; Eigen::VectorXi s0; init_type init; loss_type lt; Arrld dist;
     size_t numerical_correction; int sum_of_values; std::vector<double> learner_cum_loss = {0, 0};
+    Eigen::ArrayXi fixed_strategy;
     std::vector<double> reward_of_avg = { 0, 0 };
     
     int get_sum() {
@@ -269,7 +260,4 @@ private:
 
         return  std::numeric_limits<double>::quiet_NaN(); /*Needed more loops, did not converge.*/
     }
-
-
-
 };
