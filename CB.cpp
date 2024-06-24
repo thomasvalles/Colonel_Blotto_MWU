@@ -1,18 +1,28 @@
 #include "CB.h"
 #include "Part.h"
-#include "Helper.h"
-#include<thread>
+//#include "Helper.h"
+//#include<thread>
 
 CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[], 
 	double _beta, size_t _T0, double _tol, bool _optimistic,
-	init_type _init, size_t _init_factor, loss_type _lt) {
+	init_type _init, size_t _init_factor, loss_type _lt, Eigen::ArrayXi _fixed_strategy) {
 
 	//if you want no numerical correction, set numerical_correction = TMAX;
 	TMAX = _T; L = _L; k = _k; beta = _beta; T0 = _T0; tol = _tol; optimistic = _optimistic;
 	init = _init; lt = _lt; init_factor = _init_factor; numerical_correction = TMAX + 2; 
 	regrets  = std::vector<std::vector<long double>>(  (int) (TMAX / T0) + 1, std::vector<long double>(4));
-	eq_dis = std::vector<std::vector<long double>>((int)(TMAX / T0) + 1, std::vector<long double>(4));
-	
+	//eq_dis = std::vector<std::vector<long double>>((int)(TMAX / T0) + 1, std::vector<long double>(4));
+
+	fixed_strategy = _fixed_strategy;
+	if (fixed_strategy.size() > 0){
+		if (fixed_strategy.size() != k) {
+			std::cout << "Fixed strategy size: " << fixed_strategy.size() << " . Expected number of battlefields: " << k << '\n';
+		}
+		if (fixed_strategy.sum() != _N[0]) {
+			std::cout << "Fixed strategy sum: " << fixed_strategy.sum() << " . Expected number of soldiers: " << _N[0] <<'\n';
+		}
+	}
+
 	/*
 	std::cout << sizeof(_N) / sizeof(int) << '\n' << L;
 	if (sizeof(_N) / sizeof(int) != L) {
@@ -23,6 +33,8 @@ CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[],
 		throw(std::runtime_error("Incorrect size of values array"));
 	}
 	*/
+
+
 	N = Eigen::Map<Eigen::VectorXi>(_N, L);
 	W = Eigen::Map<Eigen::VectorXd>(_W, k);
 	//s0 = Eigen::Map<Eigen::VectorXi>(_s0, k);
@@ -111,20 +123,9 @@ Eigen::Vector<Arrld, Eigen::Dynamic> CB::initialize_loss() {
 						else {
 							p = 1. * x / (comparison_vec(h) + x);
 							int kappa = (nh / 2) - 1;
-
-							/*
-							if (l == 1) {
-								kappa = (nh / 2);
-
-							}
-							else {
-								kappa = (nh / 2) + 1;
-							}
-							loss(h, x) = W(h) * incbeta(kappa, nh - (kappa - 1), p); // + half the probability of getting exactly ui/2 voters*/
 							double cum_pr_half_minus_one = 1 - incbeta(kappa + 1, nh - kappa, p);
 							double pr_half = (1 - incbeta(kappa + 2, nh - (kappa + 1), p)) - cum_pr_half_minus_one;
-							//double pr_half = (1 - incbeta(nh / 2, nh - (nh / 2), p)) - cum_pr_half_minus_one;
-							//std::cout << cum_pr_half_minus_one << ", " << (1 - incbeta(kappa + 2, nh - (kappa + 1), p)) << '\n';
+			
 							result(h, x) = (double)init_factor * W(h) * (cum_pr_half_minus_one + 0.5 * pr_half);
 						}
 					}
@@ -147,19 +148,21 @@ void CB::assign_strat(int i, int j) {
 int CB::run() {
 	int i = 0;
 	
-	/*
-	std::string file_name = "C://Users//tom13//Desktop//FA21//cb//timing_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + ".txt";
-
-	thread_local std::ofstream f;
-	f.open(file_name);
-	f << "Iteration,Time to calculate regret" << '\n';
-	*/
 	do {
 		//for each player
-	//	std::vector<  std::unique_ptr <std::thread> > threads;
 		
 		for (int j = 0; j < L; ++j) {
+			if (fixed_strategy.size() > 0) {
+				if (j == 0){
+					strategies(j).row(i) = fixed_strategy;
+				}
+				else {
+					strategies(j).row(i) = this->rwm(i, j);
+				}
+			}
+			else {
+				strategies(j).row(i) = this->rwm(i, j);
+			}
 			//auto assign_strat = [this](int ind1, int ind2) {
 			//	strategies(ind2).row(ind1) = this->rwm(ind1, ind2);
 			//};
@@ -198,18 +201,9 @@ int CB::run() {
 			// });
 			//assign_strat(i, j);
 			//threads.emplace_back(assign_strat, i, j);
-			strategies(j).row(i) = this -> rwm(i, j);
-		
-			//threads.emplace_back(std::make_unique<std::thread>( &Helper::rwm_s, N(j), k, beta, std::ref(hist_loss(j))));
+			
 		}
-		/*
-	
-		for (auto& t : threads) { // join all the threads
-			t->join();
-		}
-		*/
 		
-		//threads.clear();
 		avg_al.row(0) += strategies(0).row(i).cast<double>();
 		avg_al.row(1) += strategies(1).row(i).cast<double>();
 		for (size_t h = 0; h < k; ++h) { //for each battle
@@ -220,27 +214,14 @@ int CB::run() {
 		
 		// every T0 rounds, calculate the regret 
 		if ((i) % T0 == 0) {
-
-			
-
-			//auto begin = std::chrono::high_resolution_clock::now();
-			//std::cout << '\n' << "Calculating Regret: " << '\n';
 			calculate_regret(i);
-
-			//std::cout << '\n' <<  "Calculating dist: " << '\n';
 			//calculate_distance_to_eq(i);
-			//std::cout << i << ": " << std::to_string(i <= TMAX) << '\n';
-			//std::cout << regrets[i / T0].back() << ": " << std::to_string(regrets[i / T0].back() > tol) << '\n' << '\n';
 		}
 		++i;
 
 		
 	} while ((i <= TMAX) && (regrets[(i -1) / T0 ].back() > tol));
-	//std::cout << i << ": " << std::to_string(i <= TMAX) << '\n';
-	//std::cout << regrets[i / T0].back() << ": " << std::to_string(regrets[i / T0].back() > tol) << '\n' << '\n';
-	//f.close();
-	//std::cout << "Max Hist loss: " << hist_loss(0).maxCoeff() << '\n';
-
+	
 	dist = dist / (i - 1);
 	avg_al = avg_al / (i - 1);
 	
@@ -249,51 +230,18 @@ int CB::run() {
 
 double CB::calculate_distance_to_eq(size_t time) {
 	
-
-
-	//std::cout << avg_al / (time + 1) << '\n';
 	double p0_dist = distance_helper(0, time);
 	double p1_dist = distance_helper(1, time);
 	double d_eq = std::max(p0_dist, p1_dist);
 	eq_dis[int(time / T0)] = std::vector<long double>{ (double)time, p0_dist, p1_dist, d_eq };
-	//std::cout << std::max(p0_dist, p1_dist);
-
 
 	return d_eq;
 	
 }
 
 double CB::distance_helper(size_t player, size_t time) {
-	//auto avg_allocations = avg_al / (time + 1);
-	
-	
-	//reward_of_avg /= ( ((double)time + 1) * ((double)time + 1) );
-	/*
-	if (player == 0) {
-		std::cout << '\n';
-	}
-	std::cout << reward_of_avg[player] / (((double)time + 1) * ((double)time + 1)) << '\n';
-	*/
 
-	//Arrld loss_mat = Arrld::Zero(N(player) + 1, k);
-
-	/*
-	if (player == 0) {
-		std::cout << avg_allocations.row(1 - player) << '\n';
-	}
-	*/
-	
-	
-	
-//	std::cout << '\n' << loss_mat << '\n';
 	long double best_resp_to_avg = -get_best_hist_loss(time, player, -hist_reward(player).transpose()) / ((double)time + 1);
-	//std::cout << get_nd_loss_vec(avg_allocations.row(player).cast<long double>().transpose(), avg_allocations.row(1 - player).cast<long double>().transpose())  << '\n';
-	//std::cout << reward_of_avg << '\n';
-	//std::cout << get_best_hist_loss(time, player, loss_mat) << '\n' ;
-	//std::cout << best_resp_to_avg << '\n';
-	//std::cout << reward_of_avg - best_resp_to_avg << '\n' << '\n';
-	//std::cout << "best resp: " << best_resp_to_avg << '\n';
-
 	return best_resp_to_avg - reward_of_avg[player] / (((double)time + 1) * ((double)time + 1)) ;
 }
 
@@ -309,8 +257,6 @@ double CB::get_reward_vec(Eigen::ArrayXi x, Eigen::ArrayXi y) {
 		Eigen::ArrayXd eq = (x.array() == y.array()).cast<double>();
 		loss += (eq * values / 2).sum();
 	}
-
-
 	return loss;
 }
 
@@ -343,7 +289,7 @@ double CB::calculate_regret(size_t time) {
 			loss_mat = (hist_loss(l) - initialized_loss(l)).transpose();
 		}
 		long double best_hist_loss = get_best_hist_loss(time, l, loss_mat);
-		//regret += ((learner_cum_loss[l] / (window_length + 1)) - (best_hist_loss / (window_length + 1)));
+
 		if (l == 0) {
 			r1 = ((learner_cum_loss[l] / (window_length + 1)) - (best_hist_loss / (window_length + 1)));
 		}
@@ -351,35 +297,21 @@ double CB::calculate_regret(size_t time) {
 			r2 = ((learner_cum_loss[l] / (window_length + 1)) - (best_hist_loss / (window_length + 1)));
 		}
 	}
-	//regrets.push_back(regret);
+
 	regrets[int (time / T0)] = std::vector<long double>{ (double)time, r1, r2, r1+r2 };
-	//std::cout << time << '\n' << int(time / T0) << '\n' << r1+ r2 << '\n'; 
 }
 
 void CB::update_hist_loss(size_t time) {
-	//for each player
-	//std::cout << time << '\n';
+	
+	// for each player
 	for (size_t l = 0; l < L; ++l) {
 		auto loss = get_loss(time, l);
 
-
+		// for each battle
 		for (size_t h = 0; h < k; ++h) {
 			learner_cum_loss[l] += loss(h, strategies(l)(time, h));
 		}
-		
-		/*
-		for (size_t i = 0; i <= time; ++i) {
-			reward_of_avg[l] += get_reward_vec(strategies(l).row(time).transpose(), strategies(1 - l).row(i).transpose());
-			reward_of_avg[l] += get_reward_vec(strategies(l).row(i).transpose(), strategies(1 - l).row(time).transpose());
-		}
-		
-		
-		//reward_of_avg[l] += get_reward_vec(strategies(l).row(time).transpose(), strategies(1 - l)(Eigen::seq(0, time), Eigen::placeholders::all).transpose());
-		//reward_of_avg[l] += get_reward_vec(strategies(l)(Eigen::seq(0, time), Eigen::placeholders::all).transpose(), strategies(1 - l).row(time).transpose());
-		
-		
-		reward_of_avg[l] -= get_reward_vec(strategies(l).row(time).transpose(), strategies(1 - l).row(time).transpose());
-		*/
+	
 		hist_reward(l) += get_reward(time - 1, l);
 
 		if (optimistic) {
@@ -421,15 +353,6 @@ Eigen::VectorXi CB::rwm(size_t t, size_t l) {
 	if ( (hist_loss(l).array() == 0).all() ) {
 		//std::cout << "Using random";
 		battles = rand_comp_n_k(total, k);
-		/*
-		if (s0.sum() == total) {
-			battles = s0;
-		}
-		else {
-			std::cout << "Warning: invalid initial strategy, starting with random strategy." << '\n';
-			battles = rand_comp_n_k(total, k);
-		}
-		 */
 	}
 
 	else {
@@ -531,8 +454,7 @@ Arrld CB::get_loss(size_t t, size_t l) {
 					loss(h, x) = W(h) * incbeta(kappa, nh - (kappa - 1), p); // + half the probability of getting exactly ui/2 voters*/
 					double cum_pr_half_minus_one = 1 - incbeta((double)kappa + 1, nh - (double)kappa, p);
 					double pr_half = (1 - incbeta((double)kappa + 2, nh - ((double)kappa + 1), p)) - cum_pr_half_minus_one;
-					//double pr_half = (1 - incbeta(nh / 2, nh - (nh / 2), p)) - cum_pr_half_minus_one;
-					//std::cout << cum_pr_half_minus_one << ", " << (1 - incbeta(kappa + 2, nh - (kappa + 1), p)) << '\n';
+			
 					loss(h, x) = W(h) * (cum_pr_half_minus_one + 0.5 * pr_half);
 				}
 			}
@@ -540,31 +462,7 @@ Arrld CB::get_loss(size_t t, size_t l) {
 	}
 	
 	else if (lt == loss_type::ev_adj) {
-		/*
-		double gamma = 1.5;
-		Eigen::ArrayXXd m1 = strategies(1 - l).row(t).replicate(N(l) + 1, 1).transpose().cast<double>();
-		Eigen::ArrayXXd m2 = Eigen::ArrayXi::LinSpaced(N(l) + 1, 0, N(l)).rowwise().replicate(k).transpose().cast<double>();
-		Eigen::ArrayXXd m3 = m1 + m2;
-		Arrld m4 = m1.binaryExpr(m3, [](auto x, auto y) { return y == 0 ? 0 : x / y; }).cast<long double>();
-		Arrld m5 = Arrld::Constant(k, N(l) + 1, 0.5);
-		loss = values * (gamma * (m5 - m4));
-		*/
-
-		/*
-		double gamma = 1.5;
-		for (size_t h = 0; h < k; ++h) {
-			for (size_t x = 0; x < N(l); ++x) {
-				double p;
-				if (strategies(1 - l)(t, h) == 0 && x == 0) {
-					p = 0;
-				}
-				else {
-					p = 1. * strategies(1 - l)(t, h) / (strategies(1 - l)(t, h) + x);
-				}
-				loss(h, x) = W(h) * std::exp(gamma * (0.5 -p));
-			}
-		}
-		*/
+		
 		double delta[] = { 0.8, 0.3, 0, 0, -0.3, -0.8 }; //advantage for player 1.
 		//double delta[] = { 0.1, 0.05, 0, 0, -0.05, -0.1 };
 		//double delta[] = { -0.08, -0.04, -0.02, 0.01, 0.06, 0 }; //NC, GA, AZ, MI, WI, PA
@@ -590,24 +488,12 @@ Arrld CB::get_loss(size_t t, size_t l) {
 					if (l == 0) {
 						double required = (nh / 2.) - (delta[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
-						//std::cout << h << ", " << l << ", " << kappa << '\n';
 					}
 					else {
 						double required = (nh / 2.) + (delta[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
-						//std::cout << h << ", " << l << ", " << kappa << '\n';
 					}
-					//int kappa = (nh / 2) - 1;
-
-					/*
-					if (l == 1) {
-						kappa = (nh / 2);
-
-					}
-					else {
-						kappa = (nh / 2) + 1;
-					}
-					loss(h, x) = W(h) * incbeta(kappa, nh - (kappa - 1), p); // + half the probability of getting exactly ui/2 voters*/
+					
 					double cum_pr_half_minus_one = 1 - incbeta(kappa + 1, nh - kappa, p);
 					double pr_half = (1 - incbeta(kappa + 2, kappa + 1, p)) - cum_pr_half_minus_one;
 					loss(h, x) = W(h) * (cum_pr_half_minus_one + 0.5 * pr_half);
@@ -661,19 +547,8 @@ Arrld CB::get_reward(size_t t, size_t l) {
 					p = 1. * x / (strategies(1 - l)(t, h) + x);
 					int kappa = (nh / 2) - 1;
 
-					/*
-					if (l == 1) {
-						kappa = (nh / 2);
-
-					}
-					else {
-						kappa = (nh / 2) + 1;
-					}
-					loss(h, x) = W(h) * incbeta(kappa, nh - (kappa - 1), p); // + half the probability of getting exactly ui/2 voters*/
 					double cum_pr_half_minus_one = 1 - incbeta(kappa + 1, nh - kappa, p);
 					double pr_half = (1 - incbeta(kappa + 2, nh - (kappa + 1), p)) - cum_pr_half_minus_one;
-					//double pr_half = (1 - incbeta(nh / 2, nh - (nh / 2), p)) - cum_pr_half_minus_one;
-					//std::cout << cum_pr_half_minus_one << ", " << (1 - incbeta(kappa + 2, nh - (kappa + 1), p)) << '\n';
 					reward(h, x) = W(h) * ( (1 - cum_pr_half_minus_one) + 0.5 * (1 - pr_half));
 				}
 			}
@@ -681,31 +556,7 @@ Arrld CB::get_reward(size_t t, size_t l) {
 	}
 
 	else if (lt == loss_type::ev_adj) {
-		/*
-		double gamma = 1.5;
-		Eigen::ArrayXXd m1 = strategies(1 - l).row(t).replicate(N(l) + 1, 1).transpose().cast<double>();
-		Eigen::ArrayXXd m2 = Eigen::ArrayXi::LinSpaced(N(l) + 1, 0, N(l)).rowwise().replicate(k).transpose().cast<double>();
-		Eigen::ArrayXXd m3 = m1 + m2;
-		Arrld m4 = m1.binaryExpr(m3, [](auto x, auto y) { return y == 0 ? 0 : x / y; }).cast<long double>();
-		Arrld m5 = Arrld::Constant(k, N(l) + 1, 0.5);
-		loss = values * (gamma * (m5 - m4));
-		*/
-
-		/*
-		double gamma = 1.5;
-		for (size_t h = 0; h < k; ++h) {
-			for (size_t x = 0; x < N(l); ++x) {
-				double p;
-				if (strategies(1 - l)(t, h) == 0 && x == 0) {
-					p = 0;
-				}
-				else {
-					p = 1. * strategies(1 - l)(t, h) / (strategies(1 - l)(t, h) + x);
-				}
-				loss(h, x) = W(h) * std::exp(gamma * (0.5 -p));
-			}
-		}
-		*/
+		
 		double delta[] = { 0.8, 0.3, 0, 0, -0.3, -0.8 }; //advantage for player 1.
 		//double delta[] = { 0.1, 0.05, 0, 0, -0.05, -0.1 };
 		//double delta[] = { -0.08, -0.04, -0.02, 0.01, 0.06, 0 }; //NC, GA, AZ, MI, WI, PA
@@ -731,24 +582,13 @@ Arrld CB::get_reward(size_t t, size_t l) {
 					if (l == 0) {
 						double required = (nh / 2.) - (delta[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
-						//std::cout << h << ", " << l << ", " << kappa << '\n';
+
 					}
 					else {
 						double required = (nh / 2.) + (delta[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
-						//std::cout << h << ", " << l << ", " << kappa << '\n';
-					}
-					//int kappa = (nh / 2) - 1;
-
-					/*
-					if (l == 1) {
-						kappa = (nh / 2);
 
 					}
-					else {
-						kappa = (nh / 2) + 1;
-					}
-					loss(h, x) = W(h) * incbeta(kappa, nh - (kappa - 1), p); // + half the probability of getting exactly ui/2 voters*/
 					double cum_pr_half_minus_one = 1 - incbeta(kappa + 1, nh - kappa, p);
 					double pr_half = (1 - incbeta(kappa + 2, kappa + 1, p)) - cum_pr_half_minus_one;
 					reward(h, x) = W(h) * ( (1 - cum_pr_half_minus_one) + 0.5 * (1 - pr_half));
@@ -766,19 +606,8 @@ long double CB::get_best_hist_loss(size_t time, size_t l, Arrld mat) {
 	//pi(j, i) represents the optimal cumulative loss for player l when they are allowed to use 
 	//j troops over the first i battlefields
 	Arrld pi = Arrld(N(l) + 1, k);
-	//Arrld H = Arrld(N(l) + 1, k);
 	Arrld H = mat;
-	//std::cout << H;
-	/*
-	if (optimistic) {
-		//H = actual_loss(l) - get_loss(time, l).transpose();
-		H = (hist_loss(l) - get_loss(time, l) - initialized_loss(l)).transpose();
-	}
-	else {
-		//H = actual_loss(l).transpose();
-		H = (hist_loss(l) - initialized_loss(l)).transpose();
-	}*/
-
+	
 	// for each possible amount of troops
 	for (size_t j = 0; j <= N(l); ++j) {
 		//pi(j, 0) = 0;
@@ -827,25 +656,13 @@ long double CB::get_best_hist_loss(size_t time, size_t l, Arrld mat) {
 
 			std::cout << br[h] << ',';
 		}
-	}
-	if (l == 0) {
-		
-		std::cout << '\n';
-		std::cout << "Actual min loss: " << s << '\n';
-		std::cout << "returned: " << pi(N(l), k - 1) << '\n';
-		std::cout << "current strat: " << '\n' << strategies(l).row(time) << '\n';
-		std::cout << "oponent strat: " << '\n' << strategies(1 - l).row(time) << '\n';
-		
-	}
-
-	
+	}	
 	*/
 
 	return pi(N(l), k - 1);
 }
 
-void CB::run_test() {
-	std::string ps = "_test";
+void CB::run_test(std::string prefix, std::string suffix) {
 
 	/*
 	Eigen::VectorXd electoral_weights(51);
@@ -884,8 +701,8 @@ void CB::run_test() {
 	auto reg = this->get_regrets();
 	//std::string file_name = "results//k_" + std::to_string(battles) + "_n_" + std::to_string(soldiers[0]) +
 	//	"_opt_" + std::to_string(optimistic) + "_rand_" + std::to_string(random) + ".txt";
-	std::string file_name = "C://Users//tom13//Desktop//FA21//cb//results//res_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_"  + std::to_string(init_factor) + ps +  ".txt";
+	std::string file_name = prefix + "res_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
+		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_"  + std::to_string(init_factor) + "_" + suffix +  ".txt";
 
 
 	thread_local std::ofstream f;
@@ -902,14 +719,28 @@ void CB::run_test() {
 	
 	f  << '\n';
 
+	long double avg_reg = -1;
+	long double min_reg = 100;
+	size_t a_min;
+	for (size_t i = 0; i < reg.size(); ++i) {
+		if (reg[i][3] < min_reg && reg[i][3] != 0) {
+			min_reg = reg[i][3];
+			a_min = i;
+		}
+	}
+
 	if (it == TMAX) {
 		f << "WARNING: MAX ITERATIONS EXECUTED" << '\n';
+		avg_reg = this->get_regrets().back().back();
+	}
+
+	else {
+		avg_reg = min_reg;
 	}
 
 	f << "Iterations: " << it << '\n';
 
-	long double avg_reg = this->get_regrets().back().back();
-
+	
 	f << "Final regret: " << std::to_string(avg_reg) << '\n';
 
 	int total_seconds = elapsed.count();
@@ -958,14 +789,7 @@ void CB::run_test() {
 	f << this->get_avg_al();
 	*/
 
-	long double min_reg = 100;
-	size_t a_min;
-	for (size_t i = 0; i < reg.size(); ++i) {
-		if (reg[i][3] < min_reg) {
-			min_reg = reg[i][3];
-			a_min = i;
-		}
-	}
+	
 
 	//auto min_reg = *std::min_element(reg.begin() + 1, reg.end());
 	//auto a_min = std::distance(reg.begin() + 1, std::min_element(reg.begin() + 1, reg.end()));
@@ -995,45 +819,44 @@ void CB::run_test() {
 
 	//std::filesystem::create_directory("regrets");
 	std::ofstream f1;
-	std::string file_name_1 = "C://Users//tom13//Desktop//FA21//cb//regrets//reg_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_" + std::to_string(init_factor) + ps + ".txt";
+	std::string file_name_1 = prefix + "reg_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
+		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_" + std::to_string(init_factor) + "_" + suffix + ".txt";
 
 	f1.open(file_name_1);
 
-	
-	std::string file_name_2 = "C://Users//tom13//Desktop//FA21//cb//eqs//eq_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_" + std::to_string(init_factor) + ps + ".txt";
+	/*
+	std::string file_name_2 = prefix + "eq_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
+		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_" + std::to_string(init_factor) + "_" + suffix + ".txt";
 
 	std::ofstream f2;
 	f2.open(file_name_2);
+	*/
 	
 	
 	f1 << "Time,R1,R2,TR" << '\n';
-	f2 << "Time,D1,D2,MD" << '\n';
+	//f2 << "Time,D1,D2,MD" << '\n';
 	for (size_t i = 0; i < reg.size(); ++i) {
 		f1 << std::to_string(reg[i][0]) << "," << std::to_string(reg[i][1]) << "," << std::to_string(reg[i][2]) << "," << std::to_string(reg[i][3]) << "," << '\n';
-		f2 << std::to_string(eq_dis[i][0]) << "," << std::to_string(eq_dis[i][1]) << "," << std::to_string(eq_dis[i][2]) << "," << std::to_string(eq_dis[i][3]) << "," << '\n';
+		//f2 << std::to_string(eq_dis[i][0]) << "," << std::to_string(eq_dis[i][1]) << "," << std::to_string(eq_dis[i][2]) << "," << std::to_string(eq_dis[i][3]) << "," << '\n';
 
-		
-		/*
-		if ((i) % T0 == 0) {
-			f1 << std::to_string(i) << "," << std::to_string(reg[i / T0]) << '\n';
-		}
-		*/
+
 	}
 	f1.close();
-	f2.close();
+	//f2.close();
 
 	
 
 
 }
 
+/*
 extern "C" {
 	void CB_test_run(size_t T, size_t L, size_t k, int N[], double W[], double beta, size_t T0, double tol, bool optimistic,
 						CB::init_type init, size_t init_factor, CB::loss_type lt) {
 		CB test = CB(T, L, k, N, W, beta, T0, tol, optimistic, init, init_factor, lt);
-		test.run_test();
+		std::string prefix = "";
+		std::string suffix = "";
+		test.run_test(prefix, suffix);
 	}
 	//CB* CB_new(size_t T, size_t L, size_t k, int N[], double W[], double beta, size_t T0, double tol, bool optimistic) { return new CB(T, L, k, N, W, beta, T0, tol, optimistic); }
 	//int CB_run(CB* game) { return game->run(); }
@@ -1041,7 +864,6 @@ extern "C" {
 	std::vector<std::vector<std::vector<int>>> CB_get_strategies(CB* game) { return game->get_strategies(); }
 	std::vector<double> CB_get_regrets(CB* game) { return game->get_regrets(); }
 	size_t CB_get_TMAX(CB* game) { return game->get_tmax(); }
-	*/
-
-	//void Geek_myFunction(Geek* geek, int a, int b) { geek->myFunction(a, b); }
+	
 }
+*/
