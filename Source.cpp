@@ -1,16 +1,88 @@
 #include "CB.h"
 #include "Part.h"
-//#include "incbeta.h"
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<chrono>
-//#include<thread>
 #include<random>
 #include<cmath>
 #include<filesystem>
 #include<memory>
 
+
+int main() {
+	
+	// if using "optimistic" update rule
+	bool optimistic = false;
+
+	// max number of iterations
+	size_t tmax = 100000;
+
+	// number of players
+	size_t l = 2;
+
+	// number of battles
+	size_t k = 5;
+
+	// calculate regret after this many rounds
+	size_t t0 = 100;
+
+	// regret tolerance. stop iterations once this regret is achieved
+	double tol = 0.05;
+
+	// learning rate. may want increase closer to 1 for a large number of soldiers
+	double beta = 0.95;
+
+	// number of soldiers each player has
+	// make sure this has as many elements as there are soldiers (L)!
+	int N[] = { 20, 20 };
+
+	const int arraySize = 5;
+
+	// battlefield weights, for now, just set to random integers
+	// make sure this has as many elements as battlefields (k)!
+	double W[arraySize];
+
+	// Seed the random number generator
+	srand(static_cast<unsigned>(time(0)));
+
+	// Generating random integers from 1 to 100 and storing them in the array
+	for (int i = 0; i < arraySize; ++i) {
+		W[i] = rand() % 100 + 1; // Random integer between 1 and 100
+	}
+
+	// type of initialization
+	CB::init_type initialization_type = CB::init_type::uniform;
+
+	// doing no initialization
+	size_t initialization_factor = 0;
+
+	// loss type
+	CB::loss_type winning_rule = CB::loss_type::zero_one;
+
+	// can use a fixed strategy, if you don't want player a to use a fixed strategy,
+	// you can either leave this as an empty array or just not provide the argument in the constructor.
+	Eigen::ArrayXi fixed_strategy(0);
+	//fixed_strategy << 4, 4, 4, 4, 4;
+
+	srand(time(NULL));
+
+	// directory to write log file to 
+	std::string prefix = "C://Users//tom13//Desktop//FA21//cb//results//";
+
+	// test postfix
+	std::string suffix = "0623_test";
+	auto test_2 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, initialization_type, initialization_factor, winning_rule, fixed_strategy);
+	test_2.run_test(prefix, suffix);
+
+
+	
+
+
+
+
+
+	/*CODE FOR RUNNING SOME OF THE EXPERIMENTS USED IN THE PAPER*/
 
 
 
@@ -24,7 +96,7 @@ Runs a specified test. Outputs test results to file named by parameters
 /*
 void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool random, size_t t) {
 
-	
+
 	Eigen::VectorXd electoral_weights(51);
 	electoral_weights << 45, 41, 27, 26, 26, 25, 21, 17, 17, 14,
 		13, 13, 12, 12, 12, 11, 10, 10, 10, 10,
@@ -32,7 +104,7 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 		6, 6, 6, 6, 5, 4, 4, 4, 4, 4,
 		4, 4, 4, 4, 3, 3, 3, 3, 3, 3,
 		3;
-		
+
 	size_t l = 2;
 	size_t T0 = 100;
 	double tol = 0.01;
@@ -112,28 +184,6 @@ void run_test(size_t battles, Eigen::VectorXi soldiers, bool optimistic, bool ra
 	f.close();
 }
 */
-int main() {
-	
-	bool optimistic = false;
-	size_t tmax = 100000;
-	size_t l = 2;
-	size_t k = 20;
-	size_t t0 = 100;
-	double tol = 0.05;
-	double beta = 0.95;
-	int N[] = { 1000, 1000 };
-
-	const int arraySize = 20;
-	double W[arraySize];
-
-	// Seed the random number generator
-	srand(static_cast<unsigned>(time(0)));
-
-	// Generating random integers from 1 to 100 and storing them in the array
-	for (int i = 0; i < arraySize; ++i) {
-		W[i] = rand() % 100 + 1; // Random integer between 1 and 100
-	}
-	
 
 	//double W[] = { 1, 5};
 	//double W[] = { 1, 2, 3, 5, 9 };
@@ -147,7 +197,7 @@ int main() {
 	//int N[] = { 114, 98 }; //2008
 
 	//double W[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	srand(time(NULL));
+
 	//double W[] = { 1, 2, 3, 5, 9 };
 	//double W[] = {42, 68, 35, 1, 70};
 	//double W[] = { 20, 16, 15, 29, 16, 18, 11, 10 }; //PA, MI, NC, FL, GA, OH, AZ, WI //2020
@@ -156,13 +206,10 @@ int main() {
 	//double W[] = { 1, 1, 1, 1, 1 };
 
 	//double W[] = { 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100),  1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100), 1 + (rand() % 100) };
-	
+
 	//auto test_1 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::ev_adj);
 	//test_1.run_test();
 
-	
-	auto test_2 = CB(tmax, l, k, N, W, beta, t0, tol, optimistic, CB::init_type::uniform, 0, CB::loss_type::zero_one);
-	test_2.run_test();
 	
 	//auto test_3 = CB(tmax, l, k, N, W, beta, t0, tol, !optimistic, CB::init_type::uniform, 0, CB::loss_type::popular_vote);
 	//test_3.run_test();
