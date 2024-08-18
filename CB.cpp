@@ -1,15 +1,20 @@
 #include "CB.h"
 #include "Part.h"
 
+
 CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[], 
 	double _beta, size_t _T0, double _tol, bool _optimistic,
-	init_type _init, size_t _init_factor, loss_type _lt, Eigen::ArrayXi _fixed_strategy) {
+	init_type _init, size_t _init_factor, loss_type _lt, bool _calc_d2e, Eigen::ArrayXi _fixed_strategy, std::vector<double> _ev_adv) {
 
 	//if you want no numerical correction, set numerical_correction = TMAX;
 	TMAX = _T; L = _L; k = _k; beta = _beta; T0 = _T0; tol = _tol; optimistic = _optimistic;
-	init = _init; lt = _lt; init_factor = _init_factor; numerical_correction = TMAX + 2; 
+	init = _init; lt = _lt; init_factor = _init_factor; numerical_correction = TMAX + 2; calc_d2e = _calc_d2e; ev_adv = _ev_adv;
 	regrets  = std::vector<std::vector<long double>>(  (int) (TMAX / T0) + 1, std::vector<long double>(4));
-	//eq_dis = std::vector<std::vector<long double>>((int)(TMAX / T0) + 1, std::vector<long double>(4));
+
+	if (calc_d2e){
+		eq_dis = std::vector<std::vector<long double>>((int)(TMAX / T0) + 1, std::vector<long double>(4));
+	}
+	
 
 	std::random_device rd;  // Will be used to obtain a seed for the random number engine
 	std::mt19937 generator(1234);
@@ -29,28 +34,30 @@ CB::CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[],
 
 	N = Eigen::Map<Eigen::VectorXi>(_N, L);
 	W = Eigen::Map<Eigen::VectorXd>(_W, k);
-	//std::srand((unsigned int)time(0));
-	//std::srand(1);
 
 	//(player)(time, battlefield)
 	strategies = Eigen::Vector<Eigen::ArrayXXi, Eigen::Dynamic>(L);
 
 	//(player)(battlefield, amount)
 	hist_loss = Eigen::Vector<Arrld, Eigen::Dynamic>(L);
-	//hist_reward = Eigen::Vector<Arrld, Eigen::Dynamic>(L);
+
+	if (calc_d2e) {
+		hist_reward = Eigen::Vector<Arrld, Eigen::Dynamic>(L);
+	}
 
 	dist = Arrld::Zero(k, N(0) + 1);
 	avg_al = Eigen::ArrayXXd::Zero(2, k);
 	for (size_t i = 0; i < L; ++i) {
 		strategies(i) = Eigen::ArrayXXi::Zero(TMAX + 1, k);
 		hist_loss(i) = Arrld::Zero(k, N(i) + 1);
-		//hist_reward(i) = Arrld::Zero(k, N(i) + 1);
+		if (calc_d2e) {
+			hist_reward(i) = Arrld::Zero(k, N(i) + 1);
+		}
 	}
 	actual_loss = hist_loss;
 	sum_of_values = W.sum();
 	W = W / sum_of_values;
 	initialized_loss = initialize_loss();
-	//W.normalize();
 }
 
 Eigen::Vector<Arrld, Eigen::Dynamic> CB::initialize_loss() {
@@ -94,9 +101,7 @@ Eigen::Vector<Arrld, Eigen::Dynamic> CB::initialize_loss() {
 				Eigen::ArrayXXd m1 = comparison_vec.replicate(N(l) + 1, 1).transpose().cast<double>();
 				Eigen::ArrayXXd m2 = Eigen::ArrayXi::LinSpaced(N(l) + 1, 0, N(l)).rowwise().replicate(k).transpose().cast<double>();
 				Eigen::ArrayXXd m3 = m1 + m2;
-				//Eigen::ArrayXXd m3 = m1 + m2 + Eigen::ArrayXXd::Constant(k, N(l) + 1, 0.0001);
 				result = ((double)init_factor * values * m1.binaryExpr(m3, [](auto x, auto y) { return y == 0 ? 0.5 : x / y; })).cast<long double>();
-				//loss = (values * (m1 / m3)).cast<long double>();
 			}
 
 			else if (lt == loss_type::electoral_vote) {
@@ -155,45 +160,6 @@ int CB::run() {
 			else {
 				strategies(j).row(i) = this->rwm(i, j);
 			}
-			//auto assign_strat = [this](int ind1, int ind2) {
-			//	strategies(ind2).row(ind1) = this->rwm(ind1, ind2);
-			//};
-			/*
-			if (j == 0) {//player 0 plays 3/2's strategy deterministically
-				//strategies(j).row(i) = rwm(i, j);
-				//Eigen::Array<int, 8, 1> strat{ 12, 8, 6, 6, 4, 3, 3, 3 }; //democrat2020
-				//Eigen::Array<int, 8, 1> strat{ 14, 10, 8, 12, 3, 7, 5, 2 }; //rep2020
-				//Eigen::Array<int, 9, 1> strat{ 8, 12, 5, 7, 22, 6, 16, 3, 19 }; //democrat2008
-				Eigen::Array<int, 9, 1> strat{ 13, 11, 8, 7, 28, 6, 31, 0, 10 }; //rep2008
-
-				strategies(j).row(i) = strat;
-				//strategies(j).row(i) = rwm(i,j);
-				/*
-				double s_th = 0;
-				int used = 0;
-				for (size_t h = 0; h < k; ++h) {
-					s_th += std::pow(W(h), 1.5);
-				}
-				for (size_t h = 0; h < k - 1; ++h) {
-					strategies(j)(i, h) = (int)(N(j) * std::pow(W(h), 1.5) / s_th + 0.5);
-					used += strategies(j)(i, h);
-				}
-
-				strategies(j)(i, k - 1) = N(j) - used;
-				
-			}
-			else {//otherwise do rwm
-				strategies(j).row(i) = rwm(i, j);
-			}
-			
-			*/
-			
-			//auto threadFunction = std::make_unique<std::function<void()>>([CB::assign_strat](i, j) {
-            //assign_strat(i, j);
-			// });
-			//assign_strat(i, j);
-			//threads.emplace_back(assign_strat, i, j);
-			
 		}
 		
 		avg_al.row(0) += strategies(0).row(i).cast<double>();
@@ -207,7 +173,9 @@ int CB::run() {
 		// every T0 rounds, calculate the regret 
 		if ((i) % T0 == 0) {
 			calculate_regret(i);
-			//calculate_distance_to_eq(i);
+			if (calc_d2e) {
+				calculate_distance_to_eq(i);
+			}
 		}
 		++i;
 
@@ -304,7 +272,18 @@ void CB::update_hist_loss(size_t time) {
 			learner_cum_loss[l] += loss(h, strategies(l)(time, h));
 		}
 	
-		//hist_reward(l) += get_reward(time - 1, l);
+		if (calc_d2e) {
+			
+			for (size_t i = 0; i <= time; ++i) {
+				reward_of_avg[l] += get_reward_vec(strategies(l).row(time).transpose(), strategies(1 - l).row(i).transpose());
+				reward_of_avg[l] += get_reward_vec(strategies(l).row(i).transpose(), strategies(1 - l).row(time).transpose());
+			}
+
+			reward_of_avg[l] -= get_reward_vec(strategies(l).row(time).transpose(), strategies(1 - l).row(time).transpose());
+		
+			hist_reward(l) += get_reward(time - 1, l);
+		}
+		
 
 		if (optimistic) {
 			if (time > 0) {
@@ -363,11 +342,6 @@ Eigen::VectorXi CB::rwm(size_t t, size_t l) {
 				std::cout << "Time: " << t << '\n' << "Sum of probabilites: " << weights.sum() << '\n';
 				throw(std::runtime_error("Probabilities do not sum to 1"));
 			}
-
-			//sample from discrete distribution
-			//std::random_device rd;  // Will be used to obtain a seed for the random number engine
-			//std::mt19937 gen(rd());// ^ (static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()))); // Standard mersenne_twister_engine seeded with rd()
-			//std::cout << rd() << '\n';
 			std::discrete_distribution<int> dist(weights.data(), weights.data() + weights.size());
 
 			battles(h) = dist(gen);
@@ -431,23 +405,11 @@ Arrld CB::get_loss(size_t t, size_t l) {
 				long double p;
 				
 				if (strategies(1 - l)(t, h) == 0 && x == 0) {
-					//p = 0;
 					loss(h, x) = W(h) * 0.5;
-					//loss(h, x) = 1;
 				}
 				else {
 					p = 1.* x / ((double)strategies(1 - l)(t, h) + (double)x);
 					int kappa = (nh / 2) - 1;
-
-					/*
-					if (l == 1) {
-						kappa = (nh / 2);
-
-					}
-					else {
-						kappa = (nh / 2) + 1;
-					}
-					loss(h, x) = W(h) * incbeta(kappa, nh - (kappa - 1), p); // + half the probability of getting exactly ui/2 voters*/
 					double cum_pr_half_minus_one = 1 - incbeta((double)kappa + 1, nh - (double)kappa, p);
 					double pr_half = (1 - incbeta((double)kappa + 2, nh - ((double)kappa + 1), p)) - cum_pr_half_minus_one;
 			
@@ -458,10 +420,7 @@ Arrld CB::get_loss(size_t t, size_t l) {
 	}
 	
 	else if (lt == loss_type::ev_adj) {
-		
-		double delta[] = { 0.8, 0.3, 0, 0, -0.3, -0.8 }; //advantage for player 1.
-		//double delta[] = { 0.1, 0.05, 0, 0, -0.05, -0.1 };
-		//double delta[] = { -0.08, -0.04, -0.02, 0.01, 0.06, 0 }; //NC, GA, AZ, MI, WI, PA
+	
 		for (size_t h = 0; h < k; ++h) {
 			for (size_t x = 0; x <= N(l); ++x) {
 				int proportionality = 10; //must be even
@@ -474,19 +433,17 @@ Arrld CB::get_loss(size_t t, size_t l) {
 				
 
 				if (strategies(1 - l)(t, h) == 0 && x == 0) {
-					//p = 0;
-					loss(h, x) = W(h) * 0.5;
-					//loss(h, x) = 1;
+					loss(h, x) = W(h) * 0.5;					
 				}
 				else {
 					p = 1. * x / (strategies(1 - l)(t, h) + x);
 					int kappa;
 					if (l == 0) {
-						double required = (nh / 2.) - (delta[h] * nh / 2.) - 1. + 0.5;
+						double required = (nh / 2.) - (ev_adv[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
 					}
 					else {
-						double required = (nh / 2.) + (delta[h] * nh / 2.) - 1. + 0.5;
+						double required = (nh / 2.) + (ev_adv[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
 					}
 					
@@ -553,9 +510,6 @@ Arrld CB::get_reward(size_t t, size_t l) {
 
 	else if (lt == loss_type::ev_adj) {
 		
-		double delta[] = { 0.8, 0.3, 0, 0, -0.3, -0.8 }; //advantage for player 1.
-		//double delta[] = { 0.1, 0.05, 0, 0, -0.05, -0.1 };
-		//double delta[] = { -0.08, -0.04, -0.02, 0.01, 0.06, 0 }; //NC, GA, AZ, MI, WI, PA
 		for (size_t h = 0; h < k; ++h) {
 			for (size_t x = 0; x <= N(l); ++x) {
 				int proportionality = 10; //must be even
@@ -568,20 +522,18 @@ Arrld CB::get_reward(size_t t, size_t l) {
 
 
 				if (strategies(1 - l)(t, h) == 0 && x == 0) {
-					//p = 0;
 					reward(h, x) = W(h) * 0.5;
-					//loss(h, x) = 1;
 				}
 				else {
 					p = 1. * x / (strategies(1 - l)(t, h) + x);
 					int kappa;
 					if (l == 0) {
-						double required = (nh / 2.) - (delta[h] * nh / 2.) - 1. + 0.5;
+						double required = (nh / 2.) - (ev_adv[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
 
 					}
 					else {
-						double required = (nh / 2.) + (delta[h] * nh / 2.) - 1. + 0.5;
+						double required = (nh / 2.) + (ev_adv[h] * nh / 2.) - 1. + 0.5;
 						kappa = (int)required;
 
 					}
@@ -617,6 +569,8 @@ long double CB::get_best_hist_loss(size_t time, size_t l, Arrld mat) {
 
 	}
 
+
+	//use below to get the actual best response strategy
 	/*
 	int j = N(l);
 
@@ -659,33 +613,6 @@ long double CB::get_best_hist_loss(size_t time, size_t l, Arrld mat) {
 }
 
 void CB::run_test(std::string prefix, std::string suffix) {
-
-	/*
-	Eigen::VectorXd electoral_weights(51);
-	electoral_weights << 45, 41, 27, 26, 26, 25, 21, 17, 17, 14,
-		13, 13, 12, 12, 12, 11, 10, 10, 10, 10,
-		9, 9, 9, 8, 8, 8, 8, 7, 7, 7,
-		6, 6, 6, 6, 5, 4, 4, 4, 4, 4,
-		4, 4, 4, 4, 3, 3, 3, 3, 3, 3,
-		3;
-
-	size_t l = 2;
-	size_t T0 = 100;
-	double tol = 0.01;
-
-	Eigen::VectorXd w(battles);
-
-	if (random) {
-		//std::srand((unsigned int)time(0));
-		w = 0.5 * Eigen::VectorXd::Random(battles).array() + 0.5;
-	}
-	else {
-		//w = electoral_weights;
-		w = Eigen::VectorXd::Constant(battles, 1);
-	}
-
-*/
-//double beta = 0.95;
 
 	auto begin = std::chrono::high_resolution_clock::now();
 	int it = this->run();
@@ -777,30 +704,25 @@ void CB::run_test(std::string prefix, std::string suffix) {
 	f << "Player 1 distribution: " << '\n';
 	f << this->get_weights() << '\n' << '\n';
 
-	/*
-	f << "Player 1 Average Allocation: " << '\n';
-	f << this->get_avg_al();
-	*/
-
-	
-
-	//auto min_reg = *std::min_element(reg.begin() + 1, reg.end());
-	//auto a_min = std::distance(reg.begin() + 1, std::min_element(reg.begin() + 1, reg.end()));
 	Eigen::VectorXd best_avg_strat = Eigen::VectorXd::Zero(k);
 	Eigen::VectorXd best_avg_strat_1 = Eigen::VectorXd::Zero(k);
 	int stop_time = (a_min) * (int)T0;
 	
-	//int stop_time = (int)TMAX;
-	//std::cout << stop_time << '\n';
-	//std::cout << strategies(0)(stop_time, 0);
+
+	// average until last time point if playing a fixed strategy
+	// since we would like to see the best strategy of the mwu player.
+	// otherwise the the minimum total regret will be too early
+	if (fixed_strategy.size() > 0) {
+		stop_time = (int)TMAX;
+	}
 
 	for (int i = 0; i < k; ++i) {
-		for (int j = 0; j <=  stop_time; ++j) {
+		for (int j = 1; j <=  stop_time; ++j) {
 			best_avg_strat(i) += (double) strategies(0)(j, i);
 			best_avg_strat_1(i) += (double)strategies(1)(j, i);
 		}
-		best_avg_strat(i) /= ((double)stop_time + 1);
-		best_avg_strat_1(i) /= ((double)stop_time + 1);
+		best_avg_strat(i) /= ((double)stop_time);
+		best_avg_strat_1(i) /= ((double)stop_time);
 	}
 
 	f << "Average Allocations: " << '\n';
@@ -810,32 +732,30 @@ void CB::run_test(std::string prefix, std::string suffix) {
 
 	f.close();
 
-	//std::filesystem::create_directory("regrets");
 	std::ofstream f1;
 	std::string file_name_1 = prefix + "regrets_k-" + std::to_string(k) + "_n-" + std::to_string(N[0]) +
 		"_optimistic-" + std::to_string(optimistic) + "_init-" + std::to_string(init) + "_loss-" + std::to_string(lt) + "_I0-" + std::to_string(init_factor) + "_" + suffix + ".txt";
 
-	f1.open(file_name_1);
-
-	/*
-	std::string file_name_2 = prefix + "eq_k_" + std::to_string(k) + "_n_" + std::to_string(N[0]) +
-		"_opt_" + std::to_string(optimistic) + "_init_" + std::to_string(init) + "_loss_" + std::to_string(lt) + "_I0_" + std::to_string(init_factor) + "_" + suffix + ".txt";
-
-	std::ofstream f2;
-	f2.open(file_name_2);
-	*/
-	
-	
+	f1.open(file_name_1);	
 	f1 << "Time,R1,R2,TR" << '\n';
-	//f2 << "Time,D1,D2,MD" << '\n';
+
 	for (size_t i = 0; i < reg.size(); ++i) {
 		f1 << std::to_string(reg[i][0]) << "," << std::to_string(reg[i][1]) << "," << std::to_string(reg[i][2]) << "," << std::to_string(reg[i][3]) << "," << '\n';
-		//f2 << std::to_string(eq_dis[i][0]) << "," << std::to_string(eq_dis[i][1]) << "," << std::to_string(eq_dis[i][2]) << "," << std::to_string(eq_dis[i][3]) << "," << '\n';
-
-
 	}
 	f1.close();
-	//f2.close();
+
+	if (calc_d2e) {
+		std::string file_name_2 = prefix + "d2e-k_" + std::to_string(k) + "_n-" + std::to_string(N[0]) +
+			"_optimistic-" + std::to_string(optimistic) + "_init-" + std::to_string(init) + "_loss-" + std::to_string(lt) + "_I0-" + std::to_string(init_factor) + "_" + suffix + ".txt";
+
+		std::ofstream f2;
+		f2.open(file_name_2);
+		f2 << "Time,D1,D2,MD" << '\n';
+		for (size_t i = 0; i < reg.size(); ++i) {
+			f2 << std::to_string(eq_dis[i][0]) << "," << std::to_string(eq_dis[i][1]) << "," << std::to_string(eq_dis[i][2]) << "," << std::to_string(eq_dis[i][3]) << "," << '\n';
+		}
+		f2.close();
+	}
 }
 
 /*

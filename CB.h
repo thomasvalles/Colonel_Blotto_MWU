@@ -25,22 +25,25 @@ public:
     enum loss_type { zero_one = 0, popular_vote = 1, electoral_vote = 2, ev_adj = 3 };
     /**
     Game constructor, initializes strategies
-    @param T_: Number of rounds to run the game
-    @param L_: Number of players
-    @param N_: Vector containing number of soldiers for each player
-    @param W_: Vector containing weights for each battle
-    @param beta_: Learning rate in (0, 1)
-    @param T0_: Calculate the regret every T0 rounds
-    @param optimistic: True if running optimistic rwm
-    @param init: The initialization type, either uniform, proportional, or three_halves
-    @param init_factor: The number of iterations to use for the warm start
-    @param loss_type: The winning rule to use, either zero_one, popular_vote, electoral_vote, or ev_adj
-    @param fixed_strategy: The fixed strategy for player a to play (they will use this in every round). Defaults to empty
+    @param _T: Number of rounds to run the game
+    @param _L: Number of players
+    @param _N: Vector containing number of soldiers for each player
+    @param _W: Vector containing weights for each battle
+    @param _beta: Learning rate in (0, 1)
+    @param _T0: Calculate the regret every T0 rounds
+    @param _optimistic: True if running optimistic rwm
+    @param _init: The initialization type, either uniform, proportional, or three_halves
+    @param _init_factor: The number of iterations to use for the warm start
+    @param _loss_type: The winning rule to use, either zero_one, popular_vote, electoral_vote, or ev_adj
+    @param _fixed_strategy: The fixed strategy for player a to play (they will use this in every round). Defaults to empty
     player a does not use a fixed strategy.
+    @param _ev_adv: If using ev_adj winning rule, the advantage to give to player 1, defaults to empty
+    @param _calc_d2e: True if you want to calculate the distance to equilibrium in addition to regret, defaults to false
     */
     CB(size_t _T, size_t _L, size_t _k, int _N[], double _W[], 
         double _beta, size_t _T0, double _tol, bool _optimistic, 
-        init_type _init, size_t _init_factor, loss_type _lt, Eigen::ArrayXi _fixed_strategy = Eigen::ArrayXi());
+        init_type _init, size_t _init_factor, loss_type _lt, bool calc_d2e = false,
+        Eigen::ArrayXi _fixed_strategy = Eigen::ArrayXi(), std::vector<double> _ev_adv = {});
 
     /**
     Simulates the game using the specified parameters
@@ -86,7 +89,7 @@ private:
     size_t TMAX; size_t L; size_t k; size_t T0; double tol; bool optimistic; double beta; size_t init_factor;
     Eigen::VectorXi N; Eigen::VectorXd W; Eigen::VectorXi s0; init_type init; loss_type lt; Arrld dist;
     size_t numerical_correction; int sum_of_values; std::vector<double> learner_cum_loss = {0, 0};
-    Eigen::ArrayXi fixed_strategy;
+    Eigen::ArrayXi fixed_strategy; std::vector<double> ev_adv; bool calc_d2e;
     std::vector<double> reward_of_avg = { 0, 0 };
     std::mt19937 gen;
     
@@ -217,6 +220,31 @@ private:
         return r;
     }
 
+
+    /*
+     * zlib License
+     *
+     * Regularized Incomplete Beta Function
+     *
+     * Copyright (c) 2016, 2017 Lewis Van Winkle
+     * http://CodePlea.com
+     *
+     * This software is provided 'as-is', without any express or implied
+     * warranty. In no event will the authors be held liable for any damages
+     * arising from the use of this software.
+     *
+     * Permission is granted to anyone to use this software for any purpose,
+     * including commercial applications, and to alter it and redistribute it
+     * freely, subject to the following restrictions:
+     *
+     * 1. The origin of this software must not be misrepresented; you must not
+     *    claim that you wrote the original software. If you use this software
+     *    in a product, an acknowledgement in the product documentation would be
+     *    appreciated but is not required.
+     * 2. Altered source versions must be plainly marked as such, and must not be
+     *    misrepresented as being the original software.
+     * 3. This notice may not be removed or altered from any source distribution.
+     */
     static double incbeta(double a, double b, double x) {
         const long double STOP = 1.0e-8;
         const long double TINY = 1.0e-30;
